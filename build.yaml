@@ -1,0 +1,12 @@
+targets:
+  $default:
+    builders:
+      freezed:
+        generate_for:
+          include:
+            - "./lib/models/updater_models/**.dart"
+
+      json_serializable:
+        generate_for:
+          include:
+            - "./lib/models/updater_models/**.dart"
