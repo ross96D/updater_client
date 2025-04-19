@@ -5,7 +5,9 @@ import 'package:get_it/get_it.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:updater_client/database.dart';
 import 'package:updater_client/models/server.dart';
+import 'package:updater_client/models/updater_models.dart';
 import 'package:updater_client/pages/add_server.dart';
+import 'package:updater_client/pages/show_server.dart';
 import 'package:updater_client/theme.dart';
 import 'package:updater_client/widgets/sidebar/sidebar.dart';
 import 'package:updater_client/widgets/sidebar/sidebar_item.dart';
@@ -110,7 +112,10 @@ class AppLayout extends StatelessWidget {
                   headerText: 'Example',
                 );
               }),
-          const Flexible(fit: FlexFit.tight, child: AddServer()),
+          const Flexible(fit: FlexFit.tight, child: ShowServer(serverData: ServerData(
+            apps: [],
+            version: VersionData(),
+          ))),
         ],
       )
     );
