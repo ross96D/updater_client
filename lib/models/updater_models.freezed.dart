@@ -741,8 +741,8 @@ Command _$CommandFromJson(Map<String, dynamic> json) {
 mixin _$Command {
   String get command => throw _privateConstructorUsedError;
   List<String> get args => throw _privateConstructorUsedError;
-  String get path => throw _privateConstructorUsedError;
-  Map<String, String> get env => throw _privateConstructorUsedError;
+  String? get path => throw _privateConstructorUsedError;
+  Map<String, String>? get env => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -757,8 +757,8 @@ abstract class $CommandCopyWith<$Res> {
   $Res call(
       {String command,
       List<String> args,
-      String path,
-      Map<String, String> env});
+      String? path,
+      Map<String, String>? env});
 }
 
 /// @nodoc
@@ -776,8 +776,8 @@ class _$CommandCopyWithImpl<$Res, $Val extends Command>
   $Res call({
     Object? command = null,
     Object? args = null,
-    Object? path = null,
-    Object? env = null,
+    Object? path = freezed,
+    Object? env = freezed,
   }) {
     return _then(_value.copyWith(
       command: null == command
@@ -788,14 +788,14 @@ class _$CommandCopyWithImpl<$Res, $Val extends Command>
           ? _value.args
           : args // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      path: null == path
+      path: freezed == path
           ? _value.path
           : path // ignore: cast_nullable_to_non_nullable
-              as String,
-      env: null == env
+              as String?,
+      env: freezed == env
           ? _value.env
           : env // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>,
+              as Map<String, String>?,
     ) as $Val);
   }
 }
@@ -810,8 +810,8 @@ abstract class _$$CommandImplCopyWith<$Res> implements $CommandCopyWith<$Res> {
   $Res call(
       {String command,
       List<String> args,
-      String path,
-      Map<String, String> env});
+      String? path,
+      Map<String, String>? env});
 }
 
 /// @nodoc
@@ -827,8 +827,8 @@ class __$$CommandImplCopyWithImpl<$Res>
   $Res call({
     Object? command = null,
     Object? args = null,
-    Object? path = null,
-    Object? env = null,
+    Object? path = freezed,
+    Object? env = freezed,
   }) {
     return _then(_$CommandImpl(
       command: null == command
@@ -839,14 +839,14 @@ class __$$CommandImplCopyWithImpl<$Res>
           ? _value._args
           : args // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      path: null == path
+      path: freezed == path
           ? _value.path
           : path // ignore: cast_nullable_to_non_nullable
-              as String,
-      env: null == env
+              as String?,
+      env: freezed == env
           ? _value._env
           : env // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>,
+              as Map<String, String>?,
     ));
   }
 }
@@ -858,7 +858,7 @@ class _$CommandImpl implements _Command {
       {required this.command,
       required final List<String> args,
       required this.path,
-      required final Map<String, String> env})
+      required final Map<String, String>? env})
       : _args = args,
         _env = env;
 
@@ -876,13 +876,15 @@ class _$CommandImpl implements _Command {
   }
 
   @override
-  final String path;
-  final Map<String, String> _env;
+  final String? path;
+  final Map<String, String>? _env;
   @override
-  Map<String, String> get env {
+  Map<String, String>? get env {
+    final value = _env;
+    if (value == null) return null;
     if (_env is EqualUnmodifiableMapView) return _env;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(_env);
+    return EqualUnmodifiableMapView(value);
   }
 
   @override
@@ -928,8 +930,8 @@ abstract class _Command implements Command {
   const factory _Command(
       {required final String command,
       required final List<String> args,
-      required final String path,
-      required final Map<String, String> env}) = _$CommandImpl;
+      required final String? path,
+      required final Map<String, String>? env}) = _$CommandImpl;
 
   factory _Command.fromJson(Map<String, dynamic> json) = _$CommandImpl.fromJson;
 
@@ -938,9 +940,9 @@ abstract class _Command implements Command {
   @override
   List<String> get args;
   @override
-  String get path;
+  String? get path;
   @override
-  Map<String, String> get env;
+  Map<String, String>? get env;
   @override
   @JsonKey(ignore: true)
   _$$CommandImplCopyWith<_$CommandImpl> get copyWith =>

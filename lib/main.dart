@@ -11,6 +11,7 @@ import 'package:updater_client/pages/add_server.dart';
 import 'package:updater_client/pages/view_server.dart';
 import 'package:updater_client/theme.dart';
 import 'package:updater_client/widgets/button.dart';
+import 'package:updater_client/widgets/resizable_split_widget.dart';
 import 'package:updater_client/widgets/showfps.dart';
 import 'package:updater_client/widgets/sidebar/sidebar.dart';
 import 'package:updater_client/widgets/sidebar/sidebar_item.dart';
@@ -259,50 +260,114 @@ final routes = GoRouter(
         GoRoute(
           path: "/",
           builder: (context, state) {
-            return Center(
-              child: Text(
-                "Hello",
-                style: Theme.of(context).textTheme.displayLarge,
-              ),
+            return const ResizableSplitWidget(
+              leftChild: Text("LEFT"),
+              rigthChild: Text("RIGTH"),
             );
           },
         ),
         GoRoute(
           path: "/view-server/:id/application/:name",
           builder: (context, state) {
-            return const ViewApplication(
-              app: Application(
-                assets: [
-                  Asset(
-                    name: "asset1",
-                    service: 'service1',
-                    serviceType: 'servicetype',
-                    systemPath: '/path/',
-                    command: null,
-                    commandPre: null,
-                    unzip: false,
-                    keepOld: false,
-                  ),
-                  Asset(
-                    name: "asset2",
-                    service: 'service2',
-                    serviceType: 'servicetype',
-                    systemPath: '/path/',
-                    command: null,
-                    commandPre: null,
-                    unzip: false,
-                    keepOld: false,
-                  ),
-                ],
-                authToken: "",
-                index: 0,
-                name: 'app name',
-                service: 'app service',
-                serviceType: 'service type',
-                commandPre: null,
-                command: null,
-                githubRelease: null,
-              ),
+            return const ApplicationDetailView(
+              applications: [
+                Application(
+                  assets: [
+                    Asset(
+                      name: "asset1",
+                      service: 'service1',
+                      serviceType: 'servicetype',
+                      systemPath: '/path/',
+                      command: null,
+                      commandPre: null,
+                      unzip: false,
+                      keepOld: false,
+                    ),
+                    Asset(
+                      name: "asset2",
+                      service: 'service2',
+                      serviceType: 'servicetype',
+                      systemPath: '/path/',
+                      command: null,
+                      commandPre: null,
+                      unzip: false,
+                      keepOld: false,
+                    ),
+                  ],
+                  authToken: "",
+                  index: 0,
+                  name: 'app name',
+                  service: 'app service',
+                  serviceType: 'service type',
+                  commandPre: null,
+                  command: null,
+                  githubRelease: null,
+                ),
+                Application(
+                  assets: [
+                    Asset(
+                      name: "asset1",
+                      service: 'service1',
+                      serviceType: 'servicetype',
+                      systemPath: '/path/',
+                      command: null,
+                      commandPre: null,
+                      unzip: false,
+                      keepOld: false,
+                    ),
+                    Asset(
+                      name: "asset2",
+                      service: 'service2',
+                      serviceType: 'servicetype',
+                      systemPath: '/path/',
+                      command: null,
+                      commandPre: null,
+                      unzip: false,
+                      keepOld: false,
+                    ),
+                  ],
+                  authToken: "",
+                  index: 0,
+                  name: 'app name',
+                  service: 'app service',
+                  serviceType: 'service type',
+                  commandPre: null,
+                  command: null,
+                  githubRelease: null,
+                ),
+                Application(
+                  assets: [
+                    Asset(
+                      name: "asset1",
+                      service: 'service1',
+                      serviceType: 'servicetype',
+                      systemPath: '/path/',
+                      command: null,
+                      commandPre: null,
+                      unzip: false,
+                      keepOld: false,
+                    ),
+                    Asset(
+                      name: "asset2",
+                      service: 'service2',
+                      serviceType: 'servicetype',
+                      systemPath: '/path/',
+                      command: null,
+                      commandPre: null,
+                      unzip: false,
+                      keepOld: false,
+                    ),
+                  ],
+                  authToken: "adjslhasl",
+                  index: 0,
+                  name: 'app name',
+                  service: 'app service',
+                  serviceType: 'service type',
+                  commandPre: null,
+                  command: Command(command: "command", args: [], env: null, path: null),
+                  githubRelease: null,
+                ),
+              ],
             );
           },
         ),

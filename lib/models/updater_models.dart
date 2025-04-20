@@ -93,8 +93,8 @@ class Command with _$Command {
   const factory Command({
     required String command,
     required List<String> args,
-    required String path,
-    required Map<String, String> env,
+    required String? path,
+    required Map<String, String>? env,
   }) = _Command;
 
   factory Command.fromJson(Map<String, Object?> json) => _$CommandFromJson(json);

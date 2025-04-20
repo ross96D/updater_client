@@ -73,8 +73,10 @@ _$CommandImpl _$$CommandImplFromJson(Map<String, dynamic> json) =>
     _$CommandImpl(
       command: json['command'] as String,
       args: (json['args'] as List<dynamic>).map((e) => e as String).toList(),
-      path: json['path'] as String,
-      env: Map<String, String>.from(json['env'] as Map),
+      path: json['path'] as String?,
+      env: (json['env'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ),
     );
 
 Map<String, dynamic> _$$CommandImplToJson(_$CommandImpl instance) =>
