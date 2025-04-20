@@ -8,13 +8,15 @@ import 'package:updater_client/database.dart';
 import 'package:updater_client/models/server.dart';
 import 'package:updater_client/models/updater_models.dart';
 import 'package:updater_client/pages/add_server.dart';
-import 'package:updater_client/pages/show_server.dart';
+import 'package:updater_client/pages/view_server.dart';
 import 'package:updater_client/theme.dart';
 import 'package:updater_client/widgets/button.dart';
 import 'package:updater_client/widgets/showfps.dart';
 import 'package:updater_client/widgets/sidebar/sidebar.dart';
 import 'package:updater_client/widgets/sidebar/sidebar_item.dart';
 import 'package:path/path.dart' as path;
+
+import 'pages/view_application.dart';
 
 void main() {
   getApplicationDocumentsDirectory().then((dir) async {
@@ -120,12 +122,28 @@ class AppLayout extends StatelessWidget {
           ),
         ],
         backgroundColor: theme.colorScheme.inversePrimary,
-        title: MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: GestureDetector(
-            onTap: () => GoRouter.of(context).go("/"),
-            child: Text(title),
-          ),
+        title: Row(
+          children: [
+            ListenableBuilder(
+                listenable: canPopTracker,
+                builder: (context, _) {
+                  if (GoRouter.of(context).canPop()) {
+                    return BackButton(
+                      onPressed: () => GoRouter.of(context).pop(),
+                    );
+                  } else {
+                    return const SizedBox.shrink();
+                  }
+                }),
+            const SizedBox(width: 5),
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () => GoRouter.of(context).push("/"),
+                child: Text(title),
+              ),
+            ),
+          ],
         ),
       ),
       body: Row(
@@ -143,7 +161,7 @@ class AppLayout extends StatelessWidget {
               }
               return AnimatedSidebar(
                 onItemSelected: (index) {
-                  GoRouter.of(context).go("/view-server/$index");
+                  GoRouter.of(context).push("/view-server/$index");
                 },
                 expanded: MediaQuery.of(context).size.width > 600,
                 items: items,
@@ -154,7 +172,7 @@ class AppLayout extends StatelessWidget {
                 header: (isExpanded) {
                   return Button(
                     onTap: () {
-                      GoRouter.of(context).go("/add-server");
+                      GoRouter.of(context).push("/add-server");
                     },
                     child: SizedBox(
                       height: 30,
@@ -193,7 +211,41 @@ class AppLayout extends StatelessWidget {
   }
 }
 
+// 1. Create a navigation state tracker
+class NavigatorChangeTracker extends ChangeNotifier {
+  void update() {
+    notifyListeners();
+  }
+}
+
+// 2. Create a navigation observer
+class RouteObserver extends NavigatorObserver {
+  final NavigatorChangeTracker tracker;
+
+  RouteObserver(this.tracker);
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    tracker.update();
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    tracker.update();
+  }
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    tracker.update();
+  }
+}
+
+final canPopTracker = NavigatorChangeTracker();
+
+final RouteObserver routeObserver = RouteObserver(canPopTracker);
+
 final routes = GoRouter(
+  observers: [routeObserver],
   routes: [
     ShellRoute(
       builder: (context, state, child) {
@@ -216,25 +268,49 @@ final routes = GoRouter(
           },
         ),
         GoRoute(
-          path: "/view-server/application/:name",
+          path: "/view-server/:id/application/:name",
           builder: (context, state) {
-            return const ViewApplication(app: Application(
-              assets: [],
-              authToken: "",
-              index: 0,
-              name: '',
-              service: '',
-              serviceType: '',
-              commandPre: null,
-              command: null,
-              githubRelease: null,
-            ));
-          }
+            return const ViewApplication(
+              app: Application(
+                assets: [
+                  Asset(
+                    name: "asset1",
+                    service: 'service1',
+                    serviceType: 'servicetype',
+                    systemPath: '/path/',
+                    command: null,
+                    commandPre: null,
+                    unzip: false,
+                    keepOld: false,
+                  ),
+                  Asset(
+                    name: "asset2",
+                    service: 'service2',
+                    serviceType: 'servicetype',
+                    systemPath: '/path/',
+                    command: null,
+                    commandPre: null,
+                    unzip: false,
+                    keepOld: false,
+                  ),
+                ],
+                authToken: "",
+                index: 0,
+                name: 'app name',
+                service: 'app service',
+                serviceType: 'service type',
+                commandPre: null,
+                command: null,
+                githubRelease: null,
+              ),
+            );
+          },
         ),
         GoRoute(
           path: "/view-server/:id",
           builder: (context, state) {
             return const ViewServer(
+              id: 0,
               serverData: ServerData(
                 apps: [],
                 version: VersionData(),

@@ -3,9 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:updater_client/models/updater_models.dart';
 
 class ViewServer extends StatefulWidget {
+  final int id;
   final ServerData serverData;
 
-  const ViewServer({super.key, required this.serverData});
+  const ViewServer({super.key, required this.id, required this.serverData});
 
   @override
   State<StatefulWidget> createState() => _ViewServerState();
@@ -15,7 +16,9 @@ class _ViewServerState extends State<ViewServer> {
   Widget _item(String text, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: _Item(app: Application(
+      child: _Item(
+        baseURL: "/view-server/${widget.id}",
+        app: Application(
         index: 0,
         name: text,
         authToken: 'tok',
@@ -46,8 +49,9 @@ class _ViewServerState extends State<ViewServer> {
 
 class _Item extends StatefulWidget {
   final Application app;
+  final String baseURL;
 
-  const _Item({required this.app});
+  const _Item({required this.app, required this.baseURL});
 
   @override
   State<StatefulWidget> createState() => _StateItem();
@@ -72,7 +76,7 @@ class _StateItem extends State<_Item> {
       onExit: (event) => setState(() => _isHovered = false),
       cursor: SystemMouseCursors.click,
       child: InkWell(
-        onTap: () => GoRouter.of(context).go("/view-server/application/${widget.app.name}"),
+        onTap: () => GoRouter.of(context).push("${widget.baseURL}/application/${widget.app.name}"),
         borderRadius: const BorderRadius.all(Radius.circular(5)),
         child: Container(
           decoration: BoxDecoration(
@@ -93,15 +97,5 @@ class _StateItem extends State<_Item> {
         ),
       ),
     );
-  }
-}
-
-class ViewApplication extends StatelessWidget {
-  final Application app;
-  const ViewApplication({super.key, required this.app,});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text("APP VIEW");
   }
 }
