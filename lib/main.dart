@@ -216,10 +216,6 @@ final routes = GoRouter(
           },
         ),
         GoRoute(
-          path: "/application/:name",
-          builder: (context, state) => Text("HESLO")
-        ),
-        GoRoute(
           path: "/view-server/application/:name",
           builder: (context, state) {
             return const ViewApplication(app: Application(
