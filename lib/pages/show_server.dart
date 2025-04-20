@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:updater_client/models/updater_models.dart';
 
-class ShowServer extends StatefulWidget {
+class ViewServer extends StatefulWidget {
   final ServerData serverData;
 
-  const ShowServer({super.key, required this.serverData});
+  const ViewServer({super.key, required this.serverData});
 
   @override
-  State<StatefulWidget> createState() => _ShowServerState();
+  State<StatefulWidget> createState() => _ViewServerState();
 }
 
-class _ShowServerState extends State<ShowServer> {
+class _ViewServerState extends State<ViewServer> {
   Widget _item(String text, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: _Item(child: Text(text)),
+      child: _Item(app: Application(
+        index: 0,
+        name: text,
+        authToken: 'tok',
+        service: 'ser',
+        serviceType: 'sds',
+        assets: [],
+        commandPre: null,
+        command: null,
+        githubRelease: null,
+      )),
     );
   }
 
@@ -27,19 +38,16 @@ class _ShowServerState extends State<ShowServer> {
         _item("HELLO2", theme),
         _item("HELLO3", theme),
         _item("HELLO4", theme),
-        ElevatedButton(
-          onPressed: () => {},
-          child: Text("HELLO"),
-        ),
+        _item("HELLO5", theme),
       ],
     );
   }
 }
 
 class _Item extends StatefulWidget {
-  final Widget child;
+  final Application app;
 
-  const _Item({required this.child});
+  const _Item({required this.app});
 
   @override
   State<StatefulWidget> createState() => _StateItem();
@@ -64,7 +72,8 @@ class _StateItem extends State<_Item> {
       onExit: (event) => setState(() => _isHovered = false),
       cursor: SystemMouseCursors.click,
       child: InkWell(
-        onTap: () => {},
+        onTap: () => GoRouter.of(context).go("/view-server/application/${widget.app.name}"),
+        borderRadius: const BorderRadius.all(Radius.circular(5)),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: const BorderRadius.all(Radius.circular(5)),
@@ -79,10 +88,20 @@ class _StateItem extends State<_Item> {
           ),
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: widget.child,
+            child: Text(widget.app.name),
           ),
         ),
       ),
     );
+  }
+}
+
+class ViewApplication extends StatelessWidget {
+  final Application app;
+  const ViewApplication({super.key, required this.app,});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text("APP VIEW");
   }
 }

@@ -104,7 +104,7 @@ class AnimatedSidebar extends StatefulWidget {
   ///
   ///   * if [header] is not null, [headerIcon] and [headerText] will be ignored.
   ///   * the [header] should be a responsive widget.
-  final Widget? header;
+  final Widget Function(bool)? header;
 
   /// The [headerIcon] is displayed on the top of the sidebar.
   ///
@@ -342,7 +342,7 @@ class _AnimatedSidebarState extends State<AnimatedSidebar>
   }
 
   Widget _buildCustomHeader() {
-    return widget.header ?? Container();
+    return widget.header != null ? widget.header!(_expanded || _inAnimation) : Container();
   }
 
   List<Widget> _buildMenuItems(BuildContext context) {

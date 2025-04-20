@@ -61,12 +61,6 @@ class _AddServer extends State<AddServer> {
     super.dispose();
   }
 
-  void _changeServer(Server server) {
-    setState(() {
-      _state = server;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
