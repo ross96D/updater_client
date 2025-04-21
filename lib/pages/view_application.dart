@@ -1,86 +1,27 @@
-// import 'package:flutter/material.dart';
-// import 'package:updater_client/models/updater_models.dart';
-
-// class ViewApplication extends StatelessWidget {
-//   final Application app;
-//   const ViewApplication({
-//     super.key,
-//     required this.app,
-//   });
-
-//   Widget _buildAsset(BuildContext context, Asset asset) {
-//     final theme = Theme.of(context);
-//     return Card(
-//       elevation: 10,
-//       shadowColor: const Color.fromRGBO(66, 66, 66, 0.75),
-//       child: Padding(
-//         padding: const EdgeInsets.all(8.0),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Text(asset.name, style: theme.textTheme.headlineSmall),
-//             Text(asset.service, style: theme.textTheme.headlineSmall),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   List<Widget> _buildAssets(BuildContext context) {
-//     final result = <Widget>[];
-//     for (final asset in app.assets) {
-//       result.add(_buildAsset(context, asset));
-//     }
-//     return result;
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final theme = Theme.of(context);
-//     return Padding(
-//       padding: const EdgeInsets.all(10.0),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.stretch,
-//         children: [
-//           Center(
-//             child: Text(
-//               app.name.toUpperCase(),
-//               style: theme.textTheme.displaySmall,
-//             ),
-//           ),
-//           ..._buildAssets(context),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// ------------------------------------------------------------------------------------
-
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:updater_client/models/updater_models.dart';
 import 'package:updater_client/widgets/button.dart';
 import 'package:updater_client/widgets/resizable_split_widget.dart';
 
-class ApplicationDetailView extends StatefulWidget {
-  final List<Application> applications;
+class ServerDataView extends StatefulWidget {
+  final ServerData server;
 
-  const ApplicationDetailView({super.key, required this.applications});
+  const ServerDataView({super.key, required this.server});
 
   @override
-  State<ApplicationDetailView> createState() => _ApplicationDetailViewState();
+  State<ServerDataView> createState() => _ServerDataViewState();
 }
 
-class _ApplicationDetailViewState extends State<ApplicationDetailView> {
+class _ServerDataViewState extends State<ServerDataView> {
   int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    final selectedApp = widget.applications[_selectedIndex];
+    final applications = widget.server.apps;
+    final selectedApp = applications[_selectedIndex];
     return LayoutBuilder(builder: (context, constraints) {
-      if ((constraints.maxWidth) < 300 + 150 + 5) {
+      if (constraints.maxWidth < 300 + 150 + 5) {
         return Center(
           child: Container(
             color: Theme.of(context).colorScheme.error,
@@ -105,10 +46,10 @@ class _ApplicationDetailViewState extends State<ApplicationDetailView> {
                 right: BorderSide(color: Theme.of(context).dividerColor)),
           ),
           child: ListView.builder(
-            itemCount: widget.applications.length,
+            itemCount: applications.length,
             itemBuilder: (context, index) => ListTile(
-              title: Text(widget.applications[index].name),
-              subtitle: Text(widget.applications[index].serviceType),
+              title: Text(applications[index].name),
+              subtitle: Text(applications[index].serviceType),
               selected: index == _selectedIndex,
               onTap: () => setState(() => _selectedIndex = index),
             ),
