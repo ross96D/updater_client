@@ -172,59 +172,6 @@ class _OverviewTab extends StatelessWidget {
       ],
     );
   }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-              width: 120,
-              child: Text(label,
-                  style: const TextStyle(fontWeight: FontWeight.w500))),
-          const SizedBox(width: 16),
-          Expanded(child: SelectableText(value)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSecureRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Row(
-            children: [
-              Text(List.filled(value.length, '•').join()),
-              if (value.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(left: 15.0),
-                  child: SizedOverflowBox(
-                    size: const Size(10, 10),
-                    child: SmallIconButton(
-                      onTap: () =>
-                          Clipboard.setData(ClipboardData(text: value)),
-                      icon: const Icon(Icons.copy, size: 15),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _AssetsTab extends StatelessWidget {
@@ -256,23 +203,6 @@ class _AssetsTab extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(label,
-                style: const TextStyle(fontWeight: FontWeight.w500)),
-          ),
-          const SizedBox(width: 16),
-          SelectableText(value),
-        ],
-      ),
-    );
-  }
 }
 
 class _GithubReleaseTab extends StatelessWidget {
@@ -290,60 +220,63 @@ class _GithubReleaseTab extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16),
       children: [
         _buildSecureRow('Token', release!.token),
-        _buildInfoRow('Repository', '${release!.owner}/${release!.repo}'),
+        _buildInfoRow('Repository', 'https://github.com/${release!.owner}/${release!.repo}'),
       ],
     );
   }
+}
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(label,
-                style: const TextStyle(fontWeight: FontWeight.w500)),
-          ),
-          const SizedBox(width: 16),
-          Expanded(child: SelectableText(value)),
-        ],
-      ),
-    );
-  }
+Widget _buildInfoRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 100,
+          child: Text(label,
+              style: const TextStyle(fontWeight: FontWeight.w500)),
+        ),
+        const SizedBox(width: 16),
+        SelectableText(value),
+      ],
+    ),
+  );
+}
 
-  Widget _buildSecureRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
+Widget _buildSecureRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 100,
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w500),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Row(
-              children: [
-                Text(List.filled(value.length, ['•']).join()),
-                IconButton(
-                  icon: const Icon(Icons.copy, size: 18),
-                  onPressed: () => Clipboard.setData(
-                    ClipboardData(text: value),
+        ),
+        const SizedBox(width: 16),
+        Row(
+          children: [
+            Text(List.filled(value.length, '•').join()),
+            if (value.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(left: 15.0),
+                child: SizedOverflowBox(
+                  size: const Size(15, 15),
+                  child: SmallIconButton(
+                    onTap: () =>
+                        Clipboard.setData(ClipboardData(text: value)),
+                    icon: const Icon(Icons.copy, size: 15),
                   ),
                 ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+              ),
+          ],
+        ),
+      ],
+    ),
+  );
 }
 
 class _CommandWidget extends StatelessWidget {
@@ -351,6 +284,22 @@ class _CommandWidget extends StatelessWidget {
   final String title;
 
   const _CommandWidget({required this.command, required this.title});
+
+  String get commandString {
+    final buffer = StringBuffer();
+    if (command.env != null) {
+      buffer.write(
+        command.env!.entries.map((e) => "${e.key}=${e.value}").join(" "),
+      );
+      buffer.write(" ");
+    }
+    buffer.write(command.command);
+    if (command.args.isNotEmpty) {
+      buffer.write(" ");
+      buffer.write(command.args.join(" "));
+    }
+    return buffer.toString();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -362,14 +311,30 @@ class _CommandWidget extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Text(title, style: theme.textTheme.titleSmall),
-              const Tooltip(
-                message: "TODO: tooltip",
-                preferBelow: false,
-                child: Icon(Icons.help_outline_sharp, size: 15),
-              ),
-            ]),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text(title, style: theme.textTheme.titleMedium),
+                    const SizedBox(width: 5),
+                    const Tooltip(
+                      message: "TODO: tooltip",
+                      preferBelow: false,
+                      child: Icon(Icons.help_outline_sharp, size: 15),
+                    ),
+                  ],
+                ),
+                SizedOverflowBox(
+                  size: const Size(25, 20),
+                  child: IconButton(
+                    onPressed: () =>
+                        Clipboard.setData(ClipboardData(text: commandString)),
+                    icon: const Icon(Icons.copy, size: 20),
+                  ),
+                ),
+              ],
+            ),
             _buildCommandLine(theme),
           ],
         ),
@@ -383,42 +348,46 @@ class _CommandWidget extends StatelessWidget {
     final envs = this.command.env ?? const {};
     final path = this.command.path;
 
-    final commandWidget = SelectableText.rich(
-      TextSpan(
-        text: command,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-        children: [
-          const TextSpan(text: ' '),
-          ...args.map((arg) => TextSpan(text: '${arg.trim()} ')),
-        ],
+    final commandWidget = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
+      child: SelectableText.rich(
+        TextSpan(
+          text: command,
+          style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+          children: [
+            const TextSpan(text: ' '),
+            ...args.map((arg) => TextSpan(text: '${arg.trim()} ')),
+          ],
+        ),
       ),
     );
-    // ...envs.entries.map((e) => TextSpan(text: "${e.key}=${e.value}\n")),
     return Padding(
       padding: const EdgeInsets.only(left: 15.0, top: 5.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           commandWidget,
+          if (path != null) const SizedBox(height: 15),
           if (path != null)
-            const SizedBox(height: 10),
-          if (path != null)
-            Row(
+            Row(children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 5.0),
+                child: Text("path:"),
+              ),
+              const SizedBox(width: 5),
+              SelectableText.rich(TextSpan(text: path)),
+            ]),
+          if (envs.isNotEmpty) const SizedBox(height: 15),
+          if (envs.isNotEmpty)
+            ExpansionTile(
+              title: const Text("Enviroment Variables"),
+              tilePadding: const EdgeInsets.symmetric(horizontal: 5.0),
+              expandedAlignment: Alignment.topLeft,
+              childrenPadding: const EdgeInsets.only(left: 8),
+              expandedCrossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("path:"),
-                const SizedBox(width: 5),
-                SelectableText.rich(TextSpan(text: path)),
-              ]
-            ),
-          if (envs.isNotEmpty)
-            const SizedBox(height: 10),
-          if (envs.isNotEmpty)
-            DropdownButton<String>(
-              items: [
-                DropdownMenuItem(value: "ASd", child: Text("ASD") ),
-                DropdownMenuItem(value: "ASd", child: Text("ASD") ),
+                ...envs.entries.map((e) => Text("${e.key}=${e.value}\n")),
               ],
-              onChanged: (Object? value) {  },
             ),
         ],
       ),

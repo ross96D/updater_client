@@ -11,8 +11,6 @@ import 'package:updater_client/pages/add_server.dart';
 import 'package:updater_client/pages/view_server.dart';
 import 'package:updater_client/theme.dart';
 import 'package:updater_client/widgets/button.dart';
-import 'package:updater_client/widgets/dropdown.dart';
-import 'package:updater_client/widgets/resizable_split_widget.dart';
 import 'package:updater_client/widgets/showfps.dart';
 import 'package:updater_client/widgets/sidebar/sidebar.dart';
 import 'package:updater_client/widgets/sidebar/sidebar_item.dart';
@@ -267,23 +265,17 @@ final routes = GoRouter(
         GoRoute(
           path: "/",
           builder: (context, state) {
-            return const Column(
-              children: [
-                Text("HEELLo1"),
-                SizedBox(
-                  child: DropdownWidget(
-                    child: SingleChildScrollView(
-                      child: Column(children: [
-                        Text("HEELLo"),
-                        Text("HEELLo"),
-                        Text("HEELLo"),
-                        Text("HEELLo"),
-                      ]),
-                    ),
-                  ),
-                ),
-                Text("HEELLo2"),
-              ],
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: const ExpansionTile(
+                title: Text("HELLO"),
+                children: [
+                  Text("HEELLo"),
+                  Text("HEELLo"),
+                  Text("HEELLo"),
+                  Text("HEELLo"),
+                ],
+              ),
             );
           },
         ),
@@ -401,7 +393,11 @@ final routes = GoRouter(
                         "NODE_PROD9": "false",
                       },
                       path: "/working/directory/path"),
-                  githubRelease: null,
+                  githubRelease: GithubRelease(
+                    token: "github token",
+                    owner: "ross96d",
+                    repo:  "updater_client",
+                  ),
                 ),
               ],
             );
