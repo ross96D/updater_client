@@ -11,6 +11,7 @@ import 'package:updater_client/pages/add_server.dart';
 import 'package:updater_client/pages/view_server.dart';
 import 'package:updater_client/theme.dart';
 import 'package:updater_client/widgets/button.dart';
+import 'package:updater_client/widgets/dropdown.dart';
 import 'package:updater_client/widgets/resizable_split_widget.dart';
 import 'package:updater_client/widgets/showfps.dart';
 import 'package:updater_client/widgets/sidebar/sidebar.dart';
@@ -100,6 +101,64 @@ class AppLayout extends StatelessWidget {
   final Widget child;
   final void Function(Brightness) changeTheme;
 
+  Widget _buildSideBar(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListenableBuilder(
+      listenable: GetIt.instance.get<Store<Server, ServerStore>>(),
+      builder: (context, _) {
+        final store = GetIt.instance.get<Store<Server, ServerStore>>();
+        final items = <SidebarItem>[];
+        for (final e in store.items.values) {
+          items.add(SidebarItem(
+            icon: Icons.dry,
+            text: e.name.value,
+          ));
+        }
+        return AnimatedSidebar(
+          onItemSelected: (index) {
+            GoRouter.of(context).push("/view-server/$index");
+          },
+          expanded: MediaQuery.of(context).size.width > 600,
+          items: items,
+          selectedIndex: 0,
+          headerIconColor: theme.brightness == Brightness.light
+              ? theme.primaryColorDark
+              : theme.primaryColorLight,
+          header: (isExpanded) {
+            return Button(
+              onTap: () {
+                GoRouter.of(context).push("/add-server");
+              },
+              child: SizedBox(
+                height: 30,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.only(left: 16.0, top: 2.0, bottom: 2.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.add, color: theme.colorScheme.onPrimary),
+                      isExpanded
+                          ? const Flexible(
+                              fit: FlexFit.tight,
+                              child: Text(
+                                "Add a new server",
+                                overflow: TextOverflow.fade,
+                                maxLines: 1,
+                                softWrap: false,
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -149,59 +208,7 @@ class AppLayout extends StatelessWidget {
       ),
       body: Row(
         children: <Widget>[
-          ListenableBuilder(
-            listenable: GetIt.instance.get<Store<Server, ServerStore>>(),
-            builder: (context, _) {
-              final store = GetIt.instance.get<Store<Server, ServerStore>>();
-              final items = <SidebarItem>[];
-              for (final e in store.items.values) {
-                items.add(SidebarItem(
-                  icon: Icons.dry,
-                  text: e.name.value,
-                ));
-              }
-              return AnimatedSidebar(
-                onItemSelected: (index) {
-                  GoRouter.of(context).push("/view-server/$index");
-                },
-                expanded: MediaQuery.of(context).size.width > 600,
-                items: items,
-                selectedIndex: 0,
-                headerIconColor: theme.brightness == Brightness.light
-                    ? theme.primaryColorDark
-                    : theme.primaryColorLight,
-                header: (isExpanded) {
-                  return Button(
-                    onTap: () {
-                      GoRouter.of(context).push("/add-server");
-                    },
-                    child: SizedBox(
-                      height: 30,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 16.0, top: 2.0, bottom: 2.0),
-                        child: Row(
-                          children: [
-                            Icon(Icons.add, color: theme.colorScheme.onPrimary),
-                            isExpanded
-                                ? const Flexible(
-                                    fit: FlexFit.tight,
-                                    child: Text(
-                                      "Add a new server",
-                                      overflow: TextOverflow.fade,
-                                      maxLines: 1,
-                                      softWrap: false,
-                                    ),
-                                  )
-                                : const SizedBox.shrink(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
+          _buildSideBar(context),
           Flexible(
             fit: FlexFit.tight,
             child: child,
@@ -260,9 +267,23 @@ final routes = GoRouter(
         GoRoute(
           path: "/",
           builder: (context, state) {
-            return const ResizableSplitWidget(
-              leftChild: Text("LEFT"),
-              rigthChild: Text("RIGTH"),
+            return const Column(
+              children: [
+                Text("HEELLo1"),
+                SizedBox(
+                  child: DropdownWidget(
+                    child: SingleChildScrollView(
+                      child: Column(children: [
+                        Text("HEELLo"),
+                        Text("HEELLo"),
+                        Text("HEELLo"),
+                        Text("HEELLo"),
+                      ]),
+                    ),
+                  ),
+                ),
+                Text("HEELLo2"),
+              ],
             );
           },
         ),
@@ -364,7 +385,22 @@ final routes = GoRouter(
                   service: 'app service',
                   serviceType: 'service type',
                   commandPre: null,
-                  command: Command(command: "command", args: [], env: null, path: null),
+                  command: Command(
+                      command: "npm",
+                      args: ["add", "dep"],
+                      env: {
+                        "NODE_PROD": "false",
+                        "NODE_PROD1": "false",
+                        "NODE_PROD2": "false",
+                        "NODE_PROD3": "false",
+                        "NODE_PROD4": "false",
+                        "NODE_PROD5": "false",
+                        "NODE_PROD6": "false",
+                        "NODE_PROD7": "false",
+                        "NODE_PROD8": "false",
+                        "NODE_PROD9": "false",
+                      },
+                      path: "/working/directory/path"),
                   githubRelease: null,
                 ),
               ],
