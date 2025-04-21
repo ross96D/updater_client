@@ -8,7 +8,6 @@ import 'package:updater_client/database.dart';
 import 'package:updater_client/models/server.dart';
 import 'package:updater_client/models/updater_models.dart';
 import 'package:updater_client/pages/add_server.dart';
-import 'package:updater_client/pages/view_server.dart';
 import 'package:updater_client/theme.dart';
 import 'package:updater_client/widgets/button.dart';
 import 'package:updater_client/widgets/showfps.dart';
