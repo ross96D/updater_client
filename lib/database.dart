@@ -31,10 +31,10 @@ sealed class Stores<V extends Base> {
   V fromJson(Object json);
 }
 
-class ServerStore extends Stores<Server> {
-  static final _instance = ServerStore._internal();
-  ServerStore._internal();
-  factory ServerStore() => _instance;
+class ServerStores extends Stores<Server> {
+  static final _instance = ServerStores._internal();
+  ServerStores._internal();
+  factory ServerStores() => _instance;
 
   static final _storeServer = StoreRef<int, Object>('server');
 
@@ -62,12 +62,6 @@ class Store<V extends Base, T extends Stores<V>> extends ChangeNotifier {
   }
 
   Store({required this.database, required this.store});
-
-  @override
-  void notifyListeners() {
-    super.notifyListeners();
-  }
-
 
   Future<int> write(V value) async {
     final db = await database.db;

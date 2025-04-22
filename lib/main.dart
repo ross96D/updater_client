@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:updater_client/api.dart';
 import 'package:updater_client/database.dart';
 import 'package:updater_client/models/server.dart';
 import 'package:updater_client/models/updater_models.dart';
@@ -23,12 +24,15 @@ void main() {
     await dir.create();
     final dbPath = path.join(dir.path, "database");
     GetIt.instance.registerSingleton(DataBase(dbPath));
-    GetIt.instance.registerSingleton<Store<Server, ServerStore>>(
-      Store<Server, ServerStore>(
+    GetIt.instance.registerSingleton<Store<Server, ServerStores>>(
+      Store<Server, ServerStores>(
         database: GetIt.instance.get<DataBase>(),
-        store: ServerStore(),
+        store: ServerStores(),
       ),
     );
+    GetIt.instance.registerSingleton(SessionManager(
+      GetIt.instance.get<Store<Server, ServerStores>>(),
+    ));
     runApp(const App());
   });
 }
@@ -45,9 +49,7 @@ class _AppChangeTheme extends InheritedWidget {
   const _AppChangeTheme({required super.child, required this.callback});
 
   static void Function(Brightness) of(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<_AppChangeTheme>()!
-        .callback;
+    return context.dependOnInheritedWidgetOfExactType<_AppChangeTheme>()!.callback;
   }
 
   @override
@@ -100,58 +102,67 @@ class AppLayout extends StatelessWidget {
 
   Widget _buildSideBar(BuildContext context) {
     final theme = Theme.of(context);
+    final manager = GetIt.instance.get<SessionManager>();
     return ListenableBuilder(
-      listenable: GetIt.instance.get<Store<Server, ServerStore>>(),
-      builder: (context, _) {
-        final store = GetIt.instance.get<Store<Server, ServerStore>>();
-        final items = <SidebarItem>[];
-        for (final e in store.items.values) {
-          items.add(SidebarItem(
-            icon: Icons.dry,
-            text: e.name.value,
-          ));
-        }
-        return AnimatedSidebar(
-          onItemSelected: (index) {
-            GoRouter.of(context).push("/view-server/$index");
-          },
-          expanded: MediaQuery.of(context).size.width > 600,
-          items: items,
-          selectedIndex: 0,
-          headerIconColor: theme.brightness == Brightness.light
-              ? theme.primaryColorDark
-              : theme.primaryColorLight,
-          header: (isExpanded) {
-            return Button(
-              onTap: () {
-                GoRouter.of(context).push("/add-server");
-              },
-              child: SizedBox(
-                height: 30,
-                child: Padding(
-                  padding:
-                      const EdgeInsets.only(left: 16.0, top: 2.0, bottom: 2.0),
-                  child: Row(
-                    children: [
-                      Icon(Icons.add, color: theme.colorScheme.onPrimary),
-                      isExpanded
-                          ? const Flexible(
-                              fit: FlexFit.tight,
-                              child: Text(
-                                "Add a new server",
-                                overflow: TextOverflow.fade,
-                                maxLines: 1,
-                                softWrap: false,
-                              ),
-                            )
-                          : const SizedBox.shrink(),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
+            listenable: manager,
+            builder: (context, _) {
+              final items = <SidebarItem>[];
+              final keys = <int>[];
+              for (final key in manager.sessions.keys) {
+                final session = manager.sessions[key]!;
+                items.add(SidebarItem(
+                  icon: switch (session.state.value) {
+                    NotConnected() => Icons.notifications_off,
+                    Connected() => Icons.notifications_on,
+                    ConnectionError() => Icons.error,
+                  },
+                  text: session.server.name.value,
+                ));
+                keys.add(key);
+              }
+              return AnimatedSidebar(
+                onItemSelected: (index) {
+                  final k = keys[index];
+                  if (manager.sessions[k]!.state.value == const Connected()) {
+                    GoRouter.of(context).push("/view-server/$k");
+                  }
+                },
+                expanded: MediaQuery.of(context).size.width > 600,
+                items: items,
+                selectedIndex: 0,
+                headerIconColor: theme.brightness == Brightness.light
+                    ? theme.primaryColorDark
+                    : theme.primaryColorLight,
+                header: (isExpanded) {
+                  return Button(
+                    onTap: () {
+                      GoRouter.of(context).push("/add-server");
+                    },
+                    child: SizedBox(
+                      height: 30,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 16.0, top: 2.0, bottom: 2.0),
+                        child: Row(
+                          children: [
+                            Icon(Icons.add, color: theme.colorScheme.onPrimary),
+                            isExpanded
+                                ? const Flexible(
+                                    fit: FlexFit.tight,
+                                    child: Text(
+                                      "Add a new server",
+                                      overflow: TextOverflow.fade,
+                                      maxLines: 1,
+                                      softWrap: false,
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
       },
     );
   }
@@ -264,23 +275,17 @@ final routes = GoRouter(
         GoRoute(
           path: "/",
           builder: (context, state) {
-            return Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: const ExpansionTile(
-                title: Text("HELLO"),
-                children: [
-                  Text("HEELLo"),
-                  Text("HEELLo"),
-                  Text("HEELLo"),
-                  Text("HEELLo"),
-                ],
-              ),
-            );
+            return Container();
           },
         ),
         GoRoute(
           path: "/view-server/:id",
           builder: (context, state) {
+            final store = GetIt.instance.get<Store<Server, ServerStores>>();
+            final server = store.items[int.tryParse(state.pathParameters["id"]!)];
+            if (server == null) {
+              return Text("SERVER with id ${state.pathParameters["id"]} does not exist");
+            }
             return const ServerDataView(
               server: ServerData(
                 version: VersionData(),
@@ -397,7 +402,7 @@ final routes = GoRouter(
                     githubRelease: GithubRelease(
                       token: "github token",
                       owner: "ross96d",
-                      repo:  "updater_client",
+                      repo: "updater_client",
                     ),
                   ),
                 ],

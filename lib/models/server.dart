@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:updater_client/models/base.dart';
 import 'package:updater_client/utils/formz.dart';
+import 'package:updater_client/utils/utils.dart';
 
 class Server extends BaseForm {
   final NonEmptyString name;
@@ -88,8 +89,7 @@ class InvalidAddress extends AddressValidationError {
   }
 }
 
-class Address extends FormzInput<String, AddressValidationError>
-    with EquatableMixin {
+class Address extends FormzInput<String, AddressValidationError> with EquatableMixin {
   const Address.pure([super.value = '']) : super.pure();
   const Address.dirty([super.value = '']) : super.dirty();
 
@@ -101,10 +101,14 @@ class Address extends FormzInput<String, AddressValidationError>
     if (value == "") {
       return EmptyAddress();
     }
-    try {
-      Uri.parse(value);
-    } on FormatException catch (e) {
-      return InvalidAddress("$e");
+    final result = parseUrl(value);
+    if (result.isError()) {
+      final error = result.unsafeGetError();
+      return InvalidAddress(error.error());
+    }
+    final uri = result.unsafeGetSuccess();
+    if (!uri.isScheme("http") && !uri.isScheme("https")) {
+      return InvalidAddress("Unsupported scheme '${uri.scheme}' (http or https only)");
     }
     return null;
   }
