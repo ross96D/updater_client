@@ -73,6 +73,11 @@ class Store<V extends Base, T extends Stores<V>> extends ChangeNotifier {
     return resp;
   }
 
+  Future<bool> delete(int key) async {
+    final db = await database.db;
+    return await store.store().record(key).delete(db) != null;
+  }
+
   Future<Map<int, V>> all() async {
     if (_cached != null) {
       return _cached!;
