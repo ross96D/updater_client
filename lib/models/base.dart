@@ -6,6 +6,8 @@ abstract class Base extends ToJson with EquatableMixin {
   const Base();
 }
 
+mixin BaseMixin on Base {}
+
 abstract class BaseForm extends Base with FormzMixin {
   const BaseForm();
 }

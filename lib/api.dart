@@ -346,14 +346,15 @@ Result<Obj, ApiError> parseJsonObject<Obj extends Object, T extends Object>(
 
 class SessionManager extends ChangeNotifier {
   late final Map<int, Session> sessions;
-  final Store<Server, ServerStores> store;
+  final ServerStore store;
 
   SessionManager(this.store) {
     sessions = {};
     store.addListener(_updateSessions);
 
-    for (final key in store.items.keys) {
-      final server = store.items[key]!;
+    for (final dbKey in store.items.keys) {
+      final key = dbKey.toKey();
+      final server = store.items[dbKey]!;
       final session = Session(server);
       _openSession(session);
       session.state.addListener(() => notifyListeners());
@@ -366,19 +367,23 @@ class SessionManager extends ChangeNotifier {
   }
 
   void _updateSessions() {
-    for (final key in store.items.keys) {
+    for (final dbKey in store.items.keys) {
+      final key = dbKey.toKey();
+      final item = store.items[dbKey]!;
       final sessionServer = sessions[key]?.server;
+
       if (sessionServer == null) {
-        sessions[key] = Session(store.items[key]!);
+        sessions[key] = Session(item);
         _openSession(sessions[key]!);
-      } else if (sessions[key]!.server != store.items[key]) {
-        sessions[key] = Session(store.items[key]!);
+      } else if (sessions[key]!.server != item) {
+        sessions[key] = Session(item);
         _openSession(sessions[key]!);
       }
     }
+
     final toRemove = <int>[];
     for (final key in sessions.keys) {
-      if (store.items[key] == null) {
+      if (store.items[IntKey(key)] == null) {
         toRemove.add(key);
       }
     }

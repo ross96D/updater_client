@@ -120,7 +120,7 @@ class _AddServer extends State<AddServer> {
                 ElevatedButton(
                   onPressed: () {
                     if (_key.currentState!.validate()) {
-                      final store = GetIt.instance.get<Store<Server, ServerStores>>();
+                      final store = GetIt.instance.get<ServerStore>();
                       store.write(_state);
                     }
                   },

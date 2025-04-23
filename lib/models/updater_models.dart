@@ -1,9 +1,31 @@
 // ignore_for_file: invalid_annotation_target
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:updater_client/models/base.dart';
 
 part 'updater_models.freezed.dart';
 part 'updater_models.g.dart';
+
+class ServerDataBase extends Base {
+  final ServerData _field;
+  const ServerDataBase(this._field);
+
+  factory ServerDataBase.fromJson(Map<String, Object?> json) {
+    return ServerDataBase(ServerData.fromJson(json));
+  }
+
+  @override
+  List<Object?> get props => [_field];
+
+  @override
+  Object toJson() {
+    return _field.toJson();
+  }
+
+  ServerData toServerData() {
+    return _field;
+  }
+}
 
 @freezed
 class ServerData with _$ServerData {
