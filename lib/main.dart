@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:updater_client/api.dart';
 import 'package:updater_client/database.dart';
-import 'package:updater_client/models/server.dart';
 import 'package:updater_client/models/updater_models.dart';
 import 'package:updater_client/pages/add_server.dart';
 import 'package:updater_client/theme.dart';
@@ -286,7 +285,7 @@ final routes = GoRouter(
             if (server == null) {
               return Text("SERVER with id ${state.pathParameters["id"]} does not exist");
             }
-            return ServerDataView(
+            return const ServerDataView(
               server: ServerData(
                 version: VersionData(),
                 apps: [

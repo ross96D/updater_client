@@ -81,7 +81,7 @@ sealed class _Store<K extends DatabaseKey, V extends Base, T extends Stores<K, V
 
   _Store({required this.database, required this.store});
 
-  Future<K> write(V value) async {
+  Future<K> add(V value) async {
     final db = await database.db;
     final resp = store.from(await store.storeRef().add(db, value.toJson()));
     if (_cached != null) {
@@ -89,6 +89,11 @@ sealed class _Store<K extends DatabaseKey, V extends Base, T extends Stores<K, V
     }
     notifyListeners();
     return resp;
+  }
+
+  Future<void> put(K key, V value) async {
+    final db = await database.db;
+    await store.storeRef().record(key).put(db, value.toJson());
   }
 
   Future<bool> delete(K key) async {
@@ -113,6 +118,9 @@ sealed class _Store<K extends DatabaseKey, V extends Base, T extends Stores<K, V
   }
 
   Future<V?> get(K key) async {
+    if (_cached != null) {
+      return _cached![key];
+    }
     final db = await database.db;
     return store.fromJson(store.storeRef().record(key.toKey()).get(db));
   }
@@ -146,6 +154,42 @@ class ServerStores extends Stores<IntKey, Server> {
 
 class ServerDataStore extends _Store<StringKey, ServerDataBase, ServerDataStores> {
   ServerDataStore({required super.database, required super.store});
+
+  @override
+  @Deprecated("use insert mehtod")
+  Future<void> put(StringKey key, ServerDataBase value) async {
+    throw UnimplementedError("do not use this method, use insert instead");
+  }
+
+  @override
+  @Deprecated("invalid method")
+  Future<StringKey> add(ServerDataBase value) async {
+    throw UnimplementedError("invalid method, cannot insert server data without an associated server");
+  }
+
+  @override
+  @Deprecated("use remove method")
+  Future<bool> delete(StringKey key) async {
+    throw UnimplementedError("do not use this method, use remove instead");
+  }
+
+  @override
+  @Deprecated("invalid method")
+  Future<ServerDataBase?> get(StringKey key) async {
+    throw UnimplementedError("do not use this method, use giveme instead");
+  }
+
+  Future<void> insert(Server key, ServerDataBase value) {
+    return super.put(StringKey(key.name.value), value);
+  }
+
+  Future<bool> remove(Server key) {
+    return super.delete(StringKey(key.name.value));
+  }
+
+  Future<ServerDataBase?> giveme(Server key) {
+    return super.get(StringKey(key.name.value));
+  }
 }
 
 class ServerDataStores extends Stores<StringKey, ServerDataBase> {

@@ -121,7 +121,7 @@ class _AddServer extends State<AddServer> {
                   onPressed: () {
                     if (_key.currentState!.validate()) {
                       final store = GetIt.instance.get<ServerStore>();
-                      store.write(_state);
+                      store.add(_state);
                     }
                   },
                   child: const Text('Submit'),
