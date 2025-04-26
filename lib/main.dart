@@ -5,8 +5,8 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:updater_client/api.dart';
+import 'package:updater_client/bdapi.dart';
 import 'package:updater_client/database.dart';
-import 'package:updater_client/models/updater_models.dart';
 import 'package:updater_client/pages/add_server.dart';
 import 'package:updater_client/theme.dart';
 import 'package:updater_client/widgets/button.dart';
@@ -29,9 +29,11 @@ void main() {
         store: ServerStores(),
       ),
     );
-    GetIt.instance.registerSingleton(SessionManager(
-      GetIt.instance.get<ServerStore>(),
+    GetIt.instance.registerSingleton(ServerDataStore(
+      store: ServerDataStores(),
+      database: GetIt.instance.get<DataBase>(),
     ));
+    GetIt.instance.registerSingleton(Sessionaizer());
     runApp(const App());
   });
 }
@@ -101,7 +103,7 @@ class AppLayout extends StatelessWidget {
 
   Widget _buildSideBar(BuildContext context) {
     final theme = Theme.of(context);
-    final manager = GetIt.instance.get<SessionManager>();
+    final manager = GetIt.instance.get<Sessionaizer>();
     return ListenableBuilder(
       listenable: manager,
       builder: (context, _) {
@@ -122,9 +124,7 @@ class AppLayout extends StatelessWidget {
         return AnimatedSidebar(
           onItemSelected: (index) {
             final k = keys[index];
-            if (manager.sessions[k]!.state.value == const Connected()) {
-              GoRouter.of(context).push("/view-server/$k");
-            }
+            GoRouter.of(context).push("/view-server/$k");
           },
           expanded: MediaQuery.of(context).size.width > 600,
           items: items,
@@ -259,10 +259,14 @@ final canPopTracker = NavigatorChangeTracker();
 
 final RouteObserver routeObserver = RouteObserver(canPopTracker);
 
+
+final navigatorKey = GlobalKey<NavigatorState>();
+
 final routes = GoRouter(
   observers: [routeObserver],
   routes: [
     ShellRoute(
+      navigatorKey: navigatorKey,
       builder: (context, state, child) {
         return AppLayout(
           title: 'This is my title',
@@ -278,135 +282,19 @@ final routes = GoRouter(
           },
         ),
         GoRoute(
+          parentNavigatorKey: navigatorKey,
           path: "/view-server/:id",
           builder: (context, state) {
             final store = GetIt.instance.get<ServerStore>();
-            final server = store.items[int.tryParse(state.pathParameters["id"]!)];
+            final id = state.pathParameters["id"];
+            final server = store.getSync(IntKey(int.tryParse(id!)!));
             if (server == null) {
-              return Text("SERVER with id ${state.pathParameters["id"]} does not exist");
+              return Text("SERVER with id $id does not exist");
             }
-            return const ServerDataView(
-              server: ServerData(
-                version: VersionData(),
-                apps: [
-                  Application(
-                    assets: [
-                      Asset(
-                        name: "asset1",
-                        service: 'service1',
-                        serviceType: 'servicetype',
-                        systemPath: '/path/',
-                        command: null,
-                        commandPre: null,
-                        unzip: false,
-                        keepOld: false,
-                      ),
-                      Asset(
-                        name: "asset2",
-                        service: 'service2',
-                        serviceType: 'servicetype',
-                        systemPath: '/path/',
-                        command: null,
-                        commandPre: null,
-                        unzip: false,
-                        keepOld: false,
-                      ),
-                    ],
-                    authToken: "",
-                    index: 0,
-                    name: 'app name',
-                    service: 'app service',
-                    serviceType: 'service type',
-                    commandPre: null,
-                    command: null,
-                    githubRelease: null,
-                  ),
-                  Application(
-                    assets: [
-                      Asset(
-                        name: "asset1",
-                        service: 'service1',
-                        serviceType: 'servicetype',
-                        systemPath: '/path/',
-                        command: null,
-                        commandPre: null,
-                        unzip: false,
-                        keepOld: false,
-                      ),
-                      Asset(
-                        name: "asset2",
-                        service: 'service2',
-                        serviceType: 'servicetype',
-                        systemPath: '/path/',
-                        command: null,
-                        commandPre: null,
-                        unzip: false,
-                        keepOld: false,
-                      ),
-                    ],
-                    authToken: "",
-                    index: 0,
-                    name: 'app name',
-                    service: 'app service',
-                    serviceType: 'service type',
-                    commandPre: null,
-                    command: null,
-                    githubRelease: null,
-                  ),
-                  Application(
-                    assets: [
-                      Asset(
-                        name: "asset1",
-                        service: 'service1',
-                        serviceType: 'servicetype',
-                        systemPath: '/path/',
-                        command: null,
-                        commandPre: null,
-                        unzip: false,
-                        keepOld: false,
-                      ),
-                      Asset(
-                        name: "asset2",
-                        service: 'service2',
-                        serviceType: 'servicetype',
-                        systemPath: '/path/',
-                        command: null,
-                        commandPre: null,
-                        unzip: false,
-                        keepOld: false,
-                      ),
-                    ],
-                    authToken: "adjslhasl",
-                    index: 0,
-                    name: 'app name',
-                    service: 'app service',
-                    serviceType: 'service type',
-                    commandPre: null,
-                    command: Command(
-                        command: "npm",
-                        args: ["add", "dep"],
-                        env: {
-                          "NODE_PROD": "false",
-                          "NODE_PROD1": "false",
-                          "NODE_PROD2": "false",
-                          "NODE_PROD3": "false",
-                          "NODE_PROD4": "false",
-                          "NODE_PROD5": "false",
-                          "NODE_PROD6": "false",
-                          "NODE_PROD7": "false",
-                          "NODE_PROD8": "false",
-                          "NODE_PROD9": "false",
-                        },
-                        path: "/working/directory/path"),
-                    githubRelease: GithubRelease(
-                      token: "github token",
-                      owner: "ross96d",
-                      repo: "updater_client",
-                    ),
-                  ),
-                ],
-              ),
-            );
+            final sessionaizer = GetIt.instance.get<Sessionaizer>();
+            final manager = sessionaizer.sessions[int.parse(id)]!;
+
+            return ServerDataView(manager: manager);
           },
         ),
         GoRoute(

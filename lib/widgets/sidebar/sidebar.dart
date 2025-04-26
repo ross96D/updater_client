@@ -420,7 +420,7 @@ class _AnimatedSidebarState extends State<AnimatedSidebar>
             borderRadius: widget.itemSelectedBorder,
             color: colorHeader ? widget.itemSelectedColor : color,
           ),
-          child: Row(
+          child: item.widget ?? Row(
             mainAxisAlignment: MainAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [

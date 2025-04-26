@@ -7,6 +7,8 @@ targets:
             - "**/models/**.dart"
 
       json_serializable:
+        options:
+          explicit_to_json: true
         generate_for:
           include:
             - "**/models/**.dart"

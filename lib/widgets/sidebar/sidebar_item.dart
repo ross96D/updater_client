@@ -9,6 +9,7 @@ class SidebarItem {
     required this.text,
     required this.icon,
     this.children = const [],
+    this.widget,
   });
 
   /// The text of the item.
@@ -16,6 +17,8 @@ class SidebarItem {
 
   /// The icon of the item.
   final IconData icon;
+
+  final Widget? widget;
 
   /// The optional child items of the item.
   final List<SidebarChildItem> children;

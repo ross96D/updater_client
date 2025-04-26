@@ -1,90 +1,179 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:updater_client/api.dart';
+import 'package:updater_client/bdapi.dart';
 import 'package:updater_client/models/updater_models.dart';
+import 'package:updater_client/utils/utils.dart';
 import 'package:updater_client/widgets/button.dart';
 import 'package:updater_client/widgets/resizable_split_widget.dart';
+import 'package:updater_client/widgets/stream.dart';
+import 'package:updater_client/widgets/toast.dart';
 
 class ServerDataView extends StatefulWidget {
-  final ServerData server;
+  final SessionManager manager;
 
-  const ServerDataView({super.key, required this.server});
+  const ServerDataView({super.key, required this.manager});
 
   @override
-  State<ServerDataView> createState() => _ServerDataViewState();
+  State<StatefulWidget> createState() => ServerDataViewState();
 }
 
-class _ServerDataViewState extends State<ServerDataView> {
+class ServerDataViewState extends State<ServerDataView> {
+  late final Stream<Result<ServerData, ApiError>> stream;
+
+  @override
+  void initState() {
+    super.initState();
+    stream = widget.manager.list();
+  }
+
+  Widget _onActive(
+    BuildContext context,
+    ResultSummary<ServerData, ApiError> summary,
+  ) {
+    if (summary.e != null) {
+      return SelectableText("ERROR: ${summary.e} \n ${summary.st}");
+    }
+    List<ApiError> errs = [];
+    while (true) {
+      final error = summary.errors.pop();
+      if (error == null) {
+        break;
+      }
+      errs.add(error);
+      showToast(context, ToastType.error, "Api Error", error.error());
+    }
+    if (summary.data != null) {
+      return _ServerDataView(serverResult: Result.success(summary.data!));
+    } else {
+      return _ServerDataView(serverResult: Result.error(Errors(errs)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamResultBuilder(
+      stream: stream,
+      builder: (context, summary) {
+        return switch (summary.connectionState) {
+          StreamConnectionState.none => throw ArgumentError("unexpected state"),
+          StreamConnectionState.waiting => const Center(
+              child: SizedBox(
+                width: 50,
+                height: 50,
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          StreamConnectionState.active || StreamConnectionState.done => _onActive(
+              context,
+              summary,
+            ),
+        };
+      },
+    );
+  }
+}
+
+class Errors extends Err with EquatableMixin {
+  final List<ApiError> errors;
+  const Errors(this.errors);
+
+  @override
+  String error() {
+    return errors.map((e) => e.error()).join('\n\n');
+  }
+
+  @override
+  List<Object?> get props => [errors];
+}
+
+class _ServerDataView extends StatefulWidget {
+  final Result<ServerData, Errors> serverResult;
+
+  const _ServerDataView({super.key, required this.serverResult});
+
+  @override
+  State<_ServerDataView> createState() => _ServerDataViewState();
+}
+
+class _ServerDataViewState extends State<_ServerDataView> {
   int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    final applications = widget.server.apps;
+    return widget.serverResult.match(
+      onSuccess: (v) => _buildSuccess(context, v),
+      onError: (e) => Center(child: SelectableText(e.error())),
+    );
+  }
+
+  Widget _buildSuccess(BuildContext context, ServerData server) {
+    final applications = server.apps;
     final selectedApp = applications[_selectedIndex];
-    return LayoutBuilder(builder: (context, constraints) {
-      if (constraints.maxWidth < 300 + 150 + 5) {
-        return Center(
-          child: Container(
-            color: Theme.of(context).colorScheme.error,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "TODO: Make it responsive",
-                style: TextStyle(
-                    inherit: true,
-                    color: Theme.of(context).colorScheme.onError),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 300 + 150 + 5) {
+          return Center(
+            child: Container(
+              color: Theme.of(context).colorScheme.error,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  "TODO: Make it responsive",
+                  style: TextStyle(inherit: true, color: Theme.of(context).colorScheme.onError),
+                ),
+              ),
+            ),
+          );
+        }
+        return ResizableSplitWidget(
+          minRightWidth: 300,
+          minLeftWidth: 150,
+          leftChild: Container(
+            decoration: BoxDecoration(
+              border: Border(right: BorderSide(color: Theme.of(context).dividerColor)),
+            ),
+            child: ListView.builder(
+              itemCount: applications.length,
+              itemBuilder: (context, index) => ListTile(
+                title: Text(applications[index].name),
+                subtitle: Text(applications[index].serviceType),
+                selected: index == _selectedIndex,
+                onTap: () => setState(() => _selectedIndex = index),
+              ),
+            ),
+          ),
+          rigthChild: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: DefaultTabController(
+              length: selectedApp.githubRelease != null ? 3 : 2,
+              child: Column(
+                children: [
+                  TabBar(
+                    tabs: [
+                      const Tab(text: 'Overview'),
+                      const Tab(text: 'Assets'),
+                      if (selectedApp.githubRelease != null) const Tab(text: 'Release'),
+                    ],
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        _OverviewTab(application: selectedApp),
+                        _AssetsTab(assets: selectedApp.assets),
+                        if (selectedApp.githubRelease != null)
+                          _GithubReleaseTab(release: selectedApp.githubRelease),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         );
-      }
-      return ResizableSplitWidget(
-        minRightWidth: 300,
-        minLeftWidth: 150,
-        leftChild: Container(
-          decoration: BoxDecoration(
-            border: Border(
-                right: BorderSide(color: Theme.of(context).dividerColor)),
-          ),
-          child: ListView.builder(
-            itemCount: applications.length,
-            itemBuilder: (context, index) => ListTile(
-              title: Text(applications[index].name),
-              subtitle: Text(applications[index].serviceType),
-              selected: index == _selectedIndex,
-              onTap: () => setState(() => _selectedIndex = index),
-            ),
-          ),
-        ),
-        rigthChild: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: DefaultTabController(
-            length: selectedApp.githubRelease != null ? 3 : 2,
-            child: Column(
-              children: [
-                TabBar(
-                  tabs: [
-                    const Tab(text: 'Overview'),
-                    const Tab(text: 'Assets'),
-                    if (selectedApp.githubRelease != null)
-                      const Tab(text: 'Release'),
-                  ],
-                ),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      _OverviewTab(application: selectedApp),
-                      _AssetsTab(assets: selectedApp.assets),
-                      if (selectedApp.githubRelease != null)
-                        _GithubReleaseTab(release: selectedApp.githubRelease),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    });
+      },
+    );
   }
 }
 
@@ -135,11 +224,9 @@ class _AssetsTab extends StatelessWidget {
           _buildInfoRow('Keep Old', assets[index].keepOld.toString()),
           _buildInfoRow('Unzip', assets[index].unzip.toString()),
           if (assets[index].commandPre != null)
-            _CommandWidget(
-                command: assets[index].commandPre!, title: 'Pre-Command'),
+            _CommandWidget(command: assets[index].commandPre!, title: 'Pre-Command'),
           if (assets[index].command != null)
-            _CommandWidget(
-                command: assets[index].command!, title: 'Main Command'),
+            _CommandWidget(command: assets[index].command!, title: 'Main Command'),
         ],
       ),
     );
@@ -174,8 +261,7 @@ Widget _buildInfoRow(String label, String value) {
       children: [
         SizedBox(
           width: 100,
-          child: Text(label,
-              style: const TextStyle(fontWeight: FontWeight.w500)),
+          child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         ),
         const SizedBox(width: 16),
         SelectableText(value),
@@ -200,15 +286,21 @@ Widget _buildSecureRow(String label, String value) {
         const SizedBox(width: 16),
         Row(
           children: [
-            Text(List.filled(value.length, '•').join()),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 80),
+              child: Text(
+                List.filled(value.length, '•').join(),
+                overflow: TextOverflow.fade,
+                softWrap: false,
+              ),
+            ),
             if (value.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(left: 15.0),
                 child: SizedOverflowBox(
                   size: const Size(15, 15),
                   child: SmallIconButton(
-                    onTap: () =>
-                        Clipboard.setData(ClipboardData(text: value)),
+                    onTap: () => Clipboard.setData(ClipboardData(text: value)),
                     icon: const Icon(Icons.copy, size: 15),
                   ),
                 ),
@@ -269,8 +361,7 @@ class _CommandWidget extends StatelessWidget {
                 SizedOverflowBox(
                   size: const Size(25, 20),
                   child: IconButton(
-                    onPressed: () =>
-                        Clipboard.setData(ClipboardData(text: commandString)),
+                    onPressed: () => Clipboard.setData(ClipboardData(text: commandString)),
                     icon: const Icon(Icons.copy, size: 20),
                   ),
                 ),

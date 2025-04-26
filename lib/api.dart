@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
-import 'package:updater_client/database.dart';
 
 import 'package:updater_client/models/server.dart';
 import 'package:updater_client/models/updater_models.dart';
@@ -12,6 +11,18 @@ import 'package:updater_client/utils/utils.dart';
 
 sealed class ApiError extends Err with EquatableMixin {
   const ApiError();
+}
+
+class NotLoggedIn extends ApiError {
+  const NotLoggedIn();
+
+  @override
+  String error() {
+    return "not logged in";
+  }
+
+  @override
+  List<Object?> get props => [];
 }
 
 class NetworkError extends ApiError {
@@ -144,7 +155,7 @@ class ConnectionError extends SessionConnectionState {
 class Session with EquatableMixin {
   final Server server;
   late final Uri url;
-  final Completer<String> token;
+  final Completer<String?> token;
   final ValueNotifier<SessionConnectionState> state;
 
   @override
@@ -181,6 +192,7 @@ class Session with EquatableMixin {
     try {
       request = await client.postUrl(uri);
     } catch (e) {
+      token.complete(Future(() => null));
       return Result.error(NetworkError("$e"));
     }
 
@@ -189,12 +201,14 @@ class Session with EquatableMixin {
 
     final result = await _doRequest(request);
     if (result.isError()) {
+      token.complete(Future(() => null));
       return Result.error(result.unsafeGetError());
     }
     final response = result.unsafeGetSuccess();
 
     final error = await _checkStatus(response);
     if (error != null) {
+      token.complete(Future(() => null));
       return Result.error(error);
     }
 
@@ -239,8 +253,18 @@ class Session with EquatableMixin {
   Future<Result<HttpClientResponse, ApiError>> _initRequest(String p) async {
     final uri = _join(url, p);
     final client = HttpClient();
-    final request = await client.getUrl(uri);
-    request.headers.add(HttpHeaders.authorizationHeader, "Bearer ${await token.future}");
+
+    final token_ = await token.future;
+    if (token_ == null) {
+      return Result.error(const NotLoggedIn());
+    }
+    HttpClientRequest request;
+    try {
+      request = await client.getUrl(uri);
+    } catch (e) {
+      return Result.error(NetworkError("$e"));
+    }
+    request.headers.add(HttpHeaders.authorizationHeader, "Bearer $token_");
 
     return await _doRequest(request);
   }
@@ -341,53 +365,5 @@ Result<Obj, ApiError> parseJsonObject<Obj extends Object, T extends Object>(
     return Result.success(fromJson(jsonObj));
   } catch (e) {
     return Result.error(ObjectParseError<Obj>(e.toString()));
-  }
-}
-
-class SessionManager extends ChangeNotifier {
-  late final Map<int, Session> sessions;
-  final ServerStore store;
-
-  SessionManager(this.store) {
-    sessions = {};
-    store.addListener(_updateSessions);
-
-    for (final dbKey in store.items.keys) {
-      final key = dbKey.toKey();
-      final server = store.items[dbKey]!;
-      final session = Session(server);
-      _openSession(session);
-      session.state.addListener(() => notifyListeners());
-      sessions[key] = session;
-    }
-  }
-
-  void _openSession(Session session) {
-    session.open().then((_) => notifyListeners());
-  }
-
-  void _updateSessions() {
-    for (final dbKey in store.items.keys) {
-      final key = dbKey.toKey();
-      final item = store.items[dbKey]!;
-      final sessionServer = sessions[key]?.server;
-
-      if (sessionServer == null) {
-        sessions[key] = Session(item);
-        _openSession(sessions[key]!);
-      } else if (sessions[key]!.server != item) {
-        sessions[key] = Session(item);
-        _openSession(sessions[key]!);
-      }
-    }
-
-    final toRemove = <int>[];
-    for (final key in sessions.keys) {
-      if (store.items[IntKey(key)] == null) {
-        toRemove.add(key);
-      }
-    }
-    sessions.removeWhere((e, _) => toRemove.contains(e));
-    notifyListeners();
   }
 }

@@ -32,9 +32,12 @@ class _Button extends State<Button> {
       ),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
-        onHover: (_) => setState(() {_isHovered = true;}),
-        onExit: (_) => setState(() {_isHovered = false;}),
-
+        onHover: (_) => setState(() {
+          _isHovered = true;
+        }),
+        onExit: (_) => setState(() {
+          _isHovered = false;
+        }),
         child: Material(
           type: MaterialType.transparency,
           textStyle: theme.textTheme.titleMedium?.copyWith(
@@ -53,11 +56,21 @@ class _Button extends State<Button> {
 }
 
 class SmallIconButton extends StatefulWidget {
-  const SmallIconButton({super.key, required this.icon, required this.onTap});
+  const SmallIconButton({
+    super.key,
+    required this.icon,
+    required this.onTap,
+    this.backgroundColor,
+    this.hoverColor,
+  });
 
   final Icon icon;
 
   final void Function() onTap;
+
+  final Color? backgroundColor;
+
+  final Color? hoverColor;
 
   @override
   State<StatefulWidget> createState() => _SmallIconButtonState();
@@ -68,9 +81,9 @@ class _SmallIconButtonState extends State<SmallIconButton> {
 
   Color _color(ThemeData theme) {
     if (_isHovered) {
-      return theme.hoverColor;
+      return widget.hoverColor ?? theme.hoverColor;
     } else {
-      return Colors.transparent;
+      return widget.backgroundColor ?? Colors.transparent;
     }
   }
 
@@ -84,8 +97,12 @@ class _SmallIconButtonState extends State<SmallIconButton> {
       ),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
-        onHover: (_) => setState(() {_isHovered = true;}),
-        onExit: (_) => setState(() {_isHovered = false;}),
+        onHover: (_) => setState(() {
+          _isHovered = true;
+        }),
+        onExit: (_) => setState(() {
+          _isHovered = false;
+        }),
         child: Material(
           type: MaterialType.transparency,
           textStyle: theme.textTheme.titleMedium?.copyWith(
@@ -104,5 +121,4 @@ class _SmallIconButtonState extends State<SmallIconButton> {
       ),
     );
   }
-
 }

@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:toastification/toastification.dart';
+import 'package:updater_client/widgets/toast.dart';
 
 abstract class ToJson {
   const ToJson();
@@ -24,6 +28,7 @@ class StringError extends Err {
 class Void {
   static const _instance = Void._internal();
   const Void._internal();
+
   /// Ligthweigth class representing an empty value or void
   /// but that can be used as an argument in functions
   factory Void() => _instance;
@@ -33,7 +38,17 @@ class Result<T extends Object, E extends Err> {
   bool _isSuccess;
   Object _value;
 
-  Result._({required bool tag, required Object value}) : _value = value, _isSuccess = tag;
+  Result._({required bool tag, required Object value})
+      : _value = value,
+        _isSuccess = tag;
+
+  @override
+  bool operator ==(Object other) {
+    if (other is Result<T, E>) {
+      return other._isSuccess == _isSuccess && other._value == _value;
+    }
+    return false;
+  }
 
   factory Result.error(E error) {
     return Result._(tag: false, value: error);
@@ -76,7 +91,8 @@ class Result<T extends Object, E extends Err> {
   }
 }
 
-Result<Uri, Err> parseUrl(String url, {
+Result<Uri, Err> parseUrl(
+  String url, {
   bool requireScheme = true,
   bool requireHost = true,
 }) {
@@ -128,7 +144,7 @@ Result<Uri, Err> parseUrl(String url, {
     final portString = authority.substring(portIndex + 1);
     try {
       port = int.parse(portString);
-    } catch (e)  {
+    } catch (e) {
       return Result.error(StringError("$e"));
     }
     if (port < 1 || port > 65535) {
@@ -149,4 +165,21 @@ Result<Uri, Err> parseUrl(String url, {
     query: query,
     fragment: fragment,
   ));
+}
+
+void showToast(BuildContext context, ToastType type, String title, String message) {
+  SchedulerBinding.instance.addPostFrameCallback(
+    (_) => toastification.showCustom(
+      context: context,
+      autoCloseDuration: const Duration(seconds: 10),
+      builder: (context, item) {
+        return ToastWidget(
+          item: item,
+          title: title,
+          message: message,
+          type: type,
+        );
+      },
+    ),
+  );
 }

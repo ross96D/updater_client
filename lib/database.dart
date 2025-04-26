@@ -93,12 +93,15 @@ sealed class _Store<K extends DatabaseKey, V extends Base, T extends Stores<K, V
 
   Future<void> put(K key, V value) async {
     final db = await database.db;
-    await store.storeRef().record(key).put(db, value.toJson());
+    await store.storeRef().record(key.toKey()).put(db, value.toJson());
+    notifyListeners();
   }
 
   Future<bool> delete(K key) async {
     final db = await database.db;
-    return await store.storeRef().record(key.toKey()).delete(db) != null;
+    final result = await store.storeRef().record(key.toKey()).delete(db) != null;
+    notifyListeners();
+    return result;
   }
 
   Future<Map<K, V>> all() async {
@@ -122,7 +125,19 @@ sealed class _Store<K extends DatabaseKey, V extends Base, T extends Stores<K, V
       return _cached![key];
     }
     final db = await database.db;
-    return store.fromJson(store.storeRef().record(key.toKey()).get(db));
+    final obj = await store.storeRef().record(key.toKey()).get(db);
+    if (obj == null) {
+      return null;
+    } else {
+      return store.fromJson(obj);
+    }
+  }
+
+  V? getSync(K key) {
+    if (_cached != null) {
+      return _cached![key];
+    }
+    return null;
   }
 }
 
@@ -190,6 +205,10 @@ class ServerDataStore extends _Store<StringKey, ServerDataBase, ServerDataStores
   Future<ServerDataBase?> giveme(Server key) {
     return super.get(StringKey(key.name.value));
   }
+
+  ServerDataBase? givemeSync(Server key) {
+    return super.getSync(StringKey(key.name.value));
+  }
 }
 
 class ServerDataStores extends Stores<StringKey, ServerDataBase> {
@@ -201,7 +220,7 @@ class ServerDataStores extends Stores<StringKey, ServerDataBase> {
     return StringKey(key as String);
   }
 
-  static final _storeServerData = StoreRef<int, Object>('server_data');
+  static final _storeServerData = stringMapStoreFactory.store('server_data');
 
   @override
   ServerDataBase fromJson(Object json) {
@@ -209,7 +228,7 @@ class ServerDataStores extends Stores<StringKey, ServerDataBase> {
   }
 
   @override
-  StoreRef<int, Object> storeRef() {
+  StoreRef<String, Object> storeRef() {
     return _storeServerData;
   }
 }

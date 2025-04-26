@@ -16,8 +16,8 @@ _$ServerDataImpl _$$ServerDataImplFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$$ServerDataImplToJson(_$ServerDataImpl instance) =>
     <String, dynamic>{
-      'apps': instance.apps,
-      'version': instance.version,
+      'apps': instance.apps.map((e) => e.toJson()).toList(),
+      'version': instance.version.toJson(),
     };
 
 _$ApplicationImpl _$$ApplicationImplFromJson(Map<String, dynamic> json) =>
@@ -49,10 +49,10 @@ Map<String, dynamic> _$$ApplicationImplToJson(_$ApplicationImpl instance) =>
       'auth_token': instance.authToken,
       'service': instance.service,
       'service_type': instance.serviceType,
-      'assets': instance.assets,
-      'cmd_pre': instance.commandPre,
-      'cmd': instance.command,
-      'github_release': instance.githubRelease,
+      'assets': instance.assets.map((e) => e.toJson()).toList(),
+      'cmd_pre': instance.commandPre?.toJson(),
+      'cmd': instance.command?.toJson(),
+      'github_release': instance.githubRelease?.toJson(),
     };
 
 _$GithubReleaseImpl _$$GithubReleaseImplFromJson(Map<String, dynamic> json) =>
@@ -110,6 +110,6 @@ Map<String, dynamic> _$$AssetImplToJson(_$AssetImpl instance) =>
       'service_type': instance.serviceType,
       'keep_old': instance.keepOld,
       'unzip': instance.unzip,
-      'cmd_pre': instance.commandPre,
-      'cmd': instance.command,
+      'cmd_pre': instance.commandPre?.toJson(),
+      'cmd': instance.command?.toJson(),
     };
