@@ -112,13 +112,14 @@ class AppLayout extends StatelessWidget {
         final keys = <int>[];
         for (final key in manager.sessions.keys) {
           final session = manager.sessions[key]!;
+          final serverdata = session.store.givemeSync(session.server)?.toServerData();
           items.add(SidebarItem(
             icon: switch (session.state.value) {
               NotConnected() => Icons.cloud,
               Connected() => Icons.cloud_done,
               ConnectionError() => Icons.cloud_off,
             },
-            text: session.server.name.value,
+            text: "${session.server.name.value} ${serverdata?.version.toString() ?? ""}",
             deleteAction: () {
               manager.serverStore.delete(IntKey(key)).onError((error, stackTrace) {
                 showToast(context, ToastType.error, "error deleting server", "Error: $error\nStacktrace: $stackTrace");

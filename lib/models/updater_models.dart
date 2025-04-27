@@ -67,6 +67,11 @@ class VersionData {
 	String toJson() {
 	  return "$major.$minor.$patch";
 	}
+
+  @override
+  String toString() {
+    return toJson();
+  }
 }
 
 @freezed

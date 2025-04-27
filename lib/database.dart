@@ -112,10 +112,15 @@ sealed class _Store<DBKey extends Object, K extends DatabaseKey<DBKey>, V extend
     return result;
   }
 
+  Completer<Map<K, V>>? _mutex;
   Future<Map<K, V>> all() async {
+    if (_mutex != null) {
+      return _mutex!.future;
+    }
     if (_cached != null) {
       return _cached!;
     }
+    _mutex = Completer();
 
     final db = await database.db;
     final res = await store.storeRef().find(db, finder: Finder());
@@ -124,7 +129,10 @@ sealed class _Store<DBKey extends Object, K extends DatabaseKey<DBKey>, V extend
     for (var e in res) {
       map[store.from(e.key)] = store.fromJson(e.value);
     }
+    _mutex!.complete(Future.delayed(const Duration(microseconds: 1),  () => map));
+    _mutex!.future.then((_) => _mutex = null);
     _cached = map;
+    notifyListeners();
     return _cached!;
   }
 
@@ -145,6 +153,8 @@ sealed class _Store<DBKey extends Object, K extends DatabaseKey<DBKey>, V extend
     if (_cached != null) {
       return _cached![key];
     }
+    // fill cache
+    all();
     return null;
   }
 }
