@@ -1,5 +1,5 @@
-import './sidebar_item.dart';
 import 'package:flutter/material.dart';
+import 'package:updater_client/widgets/button.dart';
 
 /// AnimatedSidebar is a stateful widget that displays a sidebar that can
 /// Collapse and Expand.
@@ -142,9 +142,9 @@ class AnimatedSidebar extends StatefulWidget {
     this.itemTextStyle,
     this.itemSpaceBetween = 8,
     this.itemSelectedColor,
-        // const Color.fromRGBO(48, 79, 254, 1), //MaterialIndigo
+    // const Color.fromRGBO(48, 79, 254, 1), //MaterialIndigo
     this.itemHoverColor,
-        // const Color.fromRGBO(48, 79, 254, 0.3), //MaterialIndigo
+    // const Color.fromRGBO(48, 79, 254, 0.3), //MaterialIndigo
     this.itemSelectedBorder = const BorderRadius.all(Radius.circular(5)),
     this.itemMargin = 16,
     this.switchIconExpanded = Icons.arrow_back_rounded,
@@ -163,13 +163,11 @@ class AnimatedSidebar extends StatefulWidget {
   State<AnimatedSidebar> createState() => _AnimatedSidebarState();
 }
 
-class _AnimatedSidebarState extends State<AnimatedSidebar>
-    with TickerProviderStateMixin {
+class _AnimatedSidebarState extends State<AnimatedSidebar> with TickerProviderStateMixin {
   bool _inAnimation = false;
   bool _expanded = true;
   int _onHoverIndex = -1;
   int _selectedIndex = 0;
-  int _expanedIndex = -1;
 
   void _resize() {
     setState(() {
@@ -201,10 +199,7 @@ class _AnimatedSidebarState extends State<AnimatedSidebar>
   }
 
   double _calculateHeaderItemOffset() {
-    return (widget.minSize -
-            (widget.itemMargin * 2) -
-            (widget.headerIconSize ?? 0)) /
-        2;
+    return (widget.minSize - (widget.itemMargin * 2) - (widget.headerIconSize ?? 0)) / 2;
   }
 
   void _setSelectedIndex(int index) {
@@ -216,10 +211,8 @@ class _AnimatedSidebarState extends State<AnimatedSidebar>
   }
 
   Color _defaultIconColor(ThemeData theme, bool isSelected) {
-    if (
-      (!isSelected && theme.brightness == Brightness.dark) ||
-      (isSelected && theme.brightness == Brightness.light)
-    ) {
+    if ((!isSelected && theme.brightness == Brightness.dark) ||
+        (isSelected && theme.brightness == Brightness.light)) {
       return theme.primaryColorLight;
     } else {
       return theme.primaryColorDark;
@@ -248,18 +241,19 @@ class _AnimatedSidebarState extends State<AnimatedSidebar>
   Widget _buildFrame(BuildContext context) {
     return Container(
       height: double.infinity,
-      decoration: widget.frameDecoration ?? BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color.fromRGBO(66, 66, 66, 0.75),
-            spreadRadius: 0,
-            blurRadius: 20,
-            offset: Offset(0, 10),
+      decoration: widget.frameDecoration ??
+          BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(10)),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color.fromRGBO(66, 66, 66, 0.75),
+                spreadRadius: 0,
+                blurRadius: 20,
+                offset: Offset(0, 10),
+              ),
+            ],
           ),
-        ],
-      ),
       child: _buildChild(),
     );
   }
@@ -277,18 +271,23 @@ class _AnimatedSidebarState extends State<AnimatedSidebar>
             color: Colors.grey,
           ),
           Expanded(
-            child: LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) {
-              return ConstrainedBox(
-                constraints: constraints,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: _buildMenuItems(context),
-                  ),
-                ),
-              );
-            }),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: Column(
+                children: _buildMenuItems(context),
+              ),
+            ),
           ),
+          // child: LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) {
+          //   return ConstrainedBox(
+          //     constraints: constraints,
+          //     child: SingleChildScrollView(
+          //       child: Column(
+          //         children: _buildMenuItems(context),
+          //       ),
+          //     ),
+          //   );
+          // }),
           _buildSwitchButton(),
         ],
       ),
@@ -304,10 +303,10 @@ class _AnimatedSidebarState extends State<AnimatedSidebar>
         });
       },
       icon: Icon(
-          _expanded ? widget.switchIconExpanded : widget.switchIconCollapsed,
-          color: _inAnimation
-              ? Colors.transparent
-              : widget.itemIconColor ?? _defaultIconColor(Theme.of(context), false),
+        _expanded ? widget.switchIconExpanded : widget.switchIconCollapsed,
+        color: _inAnimation
+            ? Colors.transparent
+            : widget.itemIconColor ?? _defaultIconColor(Theme.of(context), false),
       ),
     );
   }
@@ -327,6 +326,7 @@ class _AnimatedSidebarState extends State<AnimatedSidebar>
           ),
           _expanded || _inAnimation
               ? Flexible(
+                  fit: FlexFit.tight,
                   child: Text(
                     widget.headerText ?? 'missing',
                     overflow: TextOverflow.fade,
@@ -349,36 +349,93 @@ class _AnimatedSidebarState extends State<AnimatedSidebar>
     List<Widget> items = [];
     int index = 0;
     for (int i = 0; i < widget.items.length; i++) {
-      if (widget.items[i].children.isNotEmpty) {
-        if (_expanded) {
-          items.add(
-            _buildMultiItem(index, widget.items[i]),
-          );
-          index += widget.items[i].children.length + 1;
-        } else {
-          items.add(
-            _buildSingleItem(context, index, widget.items[i], false, false),
-          );
-          index++;
-        }
-      } else {
-        items.add(
-          _buildSingleItem(context, index, widget.items[i], false, false),
-        );
-        index++;
-      }
-      items.add(
-        SizedBox(
-          height: widget.itemSpaceBetween,
-        ),
-      );
+      items.add(_buildSingleItem(context, index, widget.items[i], false));
+      index++;
+
+      items.add(SizedBox(height: widget.itemSpaceBetween));
     }
     return items;
   }
 
-  Widget _buildSingleItem(BuildContext context, int index, SidebarItem item, bool isChild, bool isHeader) {
-    final selectedIndex =
-        widget.autoSelectedIndex ? _selectedIndex : widget.selectedIndex;
+  Widget _buildItem(
+    BuildContext context,
+    SidebarItem item,
+    bool isChild,
+    bool isSelected,
+  ) {
+    final theme = Theme.of(context);
+
+    final itemTextStyle = widget.itemTextStyle ??
+        (isSelected
+            ? TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: theme.colorScheme.onPrimary,
+              )
+            : TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: theme.colorScheme.onSurface,
+              ));
+
+    final paintExpanded = _expanded || _inAnimation;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              SizedBox(width: _calculateItemOffset()),
+              Icon(
+                item.icon,
+                color: widget.itemIconColor ?? _defaultIconColor(theme, isSelected),
+                size: widget.itemIconSize,
+              ),
+              paintExpanded
+                  ? const Padding(padding: EdgeInsets.only(left: 8))
+                  : const SizedBox.shrink(),
+              paintExpanded
+                  ? Flexible(
+                      fit: FlexFit.tight,
+                      child: Text(
+                        item.text,
+                        overflow: TextOverflow.fade,
+                        maxLines: 1,
+                        softWrap: false,
+                        style: isChild
+                            ? itemTextStyle.copyWith(color: itemTextStyle.color?.withOpacity(0.6))
+                            : itemTextStyle,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ],
+          ),
+        ),
+        if (_expanded && !_inAnimation)
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: SizedOverflowBox(
+              size: Size(widget.itemIconSize-5, widget.itemIconSize),
+              child: SmallIconButton(
+                splashColor: isSelected ? theme.colorScheme.onPrimary.withOpacity(0.4) : null,
+                hoverColor: isSelected ? theme.colorScheme.onPrimary.withOpacity(0.2) : null,
+                onTap: item.deleteAction,
+                icon: Icon(
+                  Icons.delete,
+                  size: widget.itemIconSize-5,
+                  color: widget.itemIconColor ?? _defaultIconColor(theme, isSelected),
+                ),
+              ),
+            ),
+          )
+      ],
+    );
+  }
+
+  Widget _buildSingleItem(BuildContext context, int index, SidebarItem item, bool isChild) {
+    final selectedIndex = widget.autoSelectedIndex ? _selectedIndex : widget.selectedIndex;
     final isSelected = index == selectedIndex;
     Color? color = isSelected
         ? widget.itemSelectedColor ?? Theme.of(context).colorScheme.primary
@@ -386,133 +443,44 @@ class _AnimatedSidebarState extends State<AnimatedSidebar>
             ? widget.itemHoverColor ?? Theme.of(context).colorScheme.primary.withAlpha(80)
             : Colors.transparent);
 
-    bool colorHeader = !_expanded &&
-        !_inAnimation &&
-        isHeader &&
-        (index >= _expanedIndex) &&
-        index <
-            (_expanedIndex +
-                widget.items[index - _expanedIndex].children.length +
-                1);
-
-    final itemTextStyle = widget.itemTextStyle ??
-      (isSelected
-        ? TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w500,
-            color: Theme.of(context).colorScheme.onPrimary,
-          )
-        : TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w500,
-            color: Theme.of(context).colorScheme.onSurface,
-          )
-    );
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onHover: (_) => _setOnHover(index),
       onExit: (_) => _setExitHover(),
       child: GestureDetector(
         child: Container(
-          width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(
             borderRadius: widget.itemSelectedBorder,
-            color: colorHeader ? widget.itemSelectedColor : color,
+            color: color,
           ),
-          child: item.widget ?? Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(width: _calculateItemOffset()),
-              Icon(
-                item.icon,
-                color: widget.itemIconColor ?? _defaultIconColor(Theme.of(context), isSelected),
-                size: widget.itemIconSize,
-              ),
-              _expanded || _inAnimation
-                  ? const Padding(padding: EdgeInsets.only(left: 8))
-                  : const SizedBox.shrink(),
-              _expanded || _inAnimation
-                  ? Flexible(
-                      child: Text(
-                        item.text,
-                        overflow: TextOverflow.fade,
-                        maxLines: 1,
-                        softWrap: false,
-                        style: isChild
-                            ? itemTextStyle.copyWith(
-                                color: itemTextStyle.color?.withOpacity(0.6)
-                              )
-                            : itemTextStyle,
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-              _expanded && !_inAnimation && isHeader
-                  ? Padding(
-                      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-                      child: Icon(
-                        Icons.keyboard_arrow_down,
-                        size: widget.itemIconSize,
-                        color: widget.itemIconColor ?? _defaultIconColor(Theme.of(context), isSelected),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-            ],
-          ),
+          child: _buildItem(context, item, isChild, isSelected),
         ),
         onTap: () {
-          if (isHeader) {
-            setState(() {
-              _expanedIndex = index;
-            });
-          } else if (!isChild) {
-            setState(() {
-              _expanedIndex = -1;
-            });
-          }
           _setSelectedIndex(index);
           widget.onItemSelected(index);
         },
       ),
     );
   }
+}
 
-  Widget _buildMultiItem(int baseIndex, SidebarItem item) {
-    List<Widget> childItems = [];
-    for (int i = 0; i < item.children.length; i++) {
-      childItems.add(
-        SizedBox(
-          height: widget.itemSpaceBetween,
-        ),
-      );
-      childItems.add(
-        _buildSingleItem(
-            context,
-            baseIndex + i + 1,
-            SidebarItem(
-              text: item.children[i].text,
-              icon: item.children[i].icon,
-            ),
-            true,
-            false),
-      );
-    }
-    return Column(
-      children: [
-        _buildSingleItem(context, baseIndex, item, false, true),
-        Container(
-          margin: const EdgeInsets.only(left: 12),
-          child: _expanded && !_inAnimation &&
-                  ((_selectedIndex >= baseIndex &&
-                          _selectedIndex <= baseIndex + childItems.length) ||
-                      _expanedIndex == baseIndex)
-              ? Column(
-                  children: childItems,
-                )
-              : const SizedBox.shrink(),
-        ),
-      ],
-    );
-  }
+/// A [SidebarItem] is a Object that contains the information of a sidebar item.
+/// It contains the text and the icon of the item.
+/// Possible to add child items to the item and make it expanding.
+/// It is used in the [AnimatedSidebar] widget. (See [AnimatedSidebar.items])
+class SidebarItem {
+  SidebarItem({
+    required this.text,
+    required this.icon,
+    required this.deleteAction,
+  });
+
+  /// The text of the item.
+  final String text;
+
+  /// The icon of the item.
+  final IconData icon;
+
+  final void Function() deleteAction; 
 }

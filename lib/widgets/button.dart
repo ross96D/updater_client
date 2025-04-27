@@ -62,6 +62,7 @@ class SmallIconButton extends StatefulWidget {
     required this.onTap,
     this.backgroundColor,
     this.hoverColor,
+    this.splashColor,
   });
 
   final Icon icon;
@@ -71,6 +72,8 @@ class SmallIconButton extends StatefulWidget {
   final Color? backgroundColor;
 
   final Color? hoverColor;
+
+  final Color? splashColor;
 
   @override
   State<StatefulWidget> createState() => _SmallIconButtonState();
@@ -112,8 +115,9 @@ class _SmallIconButtonState extends State<SmallIconButton> {
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: widget.onTap,
+            splashColor: widget.splashColor,
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(5.0),
               child: widget.icon,
             ),
           ),

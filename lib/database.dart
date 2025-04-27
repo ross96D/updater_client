@@ -59,15 +59,16 @@ class DataBase {
   }
 }
 
-sealed class Stores<K extends DatabaseKey, V extends Base> {
-  final K Function(Object) from;
+sealed class Stores<DBKey extends Object, K extends DatabaseKey<DBKey>, V extends Base> {
+  final K Function(DBKey) from;
   const Stores(this.from);
 
-  StoreRef<Object, Object> storeRef();
+  StoreRef<DBKey, Object> storeRef();
   V fromJson(Object json);
 }
 
-sealed class _Store<K extends DatabaseKey, V extends Base, T extends Stores<K, V>> extends ChangeNotifier {
+sealed class _Store<DBKey extends Object, K extends DatabaseKey<DBKey>, V extends Base, T extends Stores<DBKey, K, V>>
+    extends ChangeNotifier {
   final DataBase database;
   T store;
   Map<K, V>? _cached;
@@ -83,7 +84,8 @@ sealed class _Store<K extends DatabaseKey, V extends Base, T extends Stores<K, V
 
   Future<K> add(V value) async {
     final db = await database.db;
-    final resp = store.from(await store.storeRef().add(db, value.toJson()));
+    final key = await store.storeRef().add(db, value.toJson());
+    final resp = store.from(key);
     if (_cached != null) {
       _cached![resp] = value;
     }
@@ -94,12 +96,18 @@ sealed class _Store<K extends DatabaseKey, V extends Base, T extends Stores<K, V
   Future<void> put(K key, V value) async {
     final db = await database.db;
     await store.storeRef().record(key.toKey()).put(db, value.toJson());
+    if (_cached != null) {
+      _cached![key] = value;
+    }
     notifyListeners();
   }
 
   Future<bool> delete(K key) async {
     final db = await database.db;
     final result = await store.storeRef().record(key.toKey()).delete(db) != null;
+    if (result && _cached != null) {
+      _cached!.remove(key);
+    }
     notifyListeners();
     return result;
   }
@@ -141,11 +149,11 @@ sealed class _Store<K extends DatabaseKey, V extends Base, T extends Stores<K, V
   }
 }
 
-class ServerStore extends _Store<IntKey, Server, ServerStores> {
+class ServerStore extends _Store<int, IntKey, Server, ServerStores> {
   ServerStore({required super.database, required super.store});
 }
 
-class ServerStores extends Stores<IntKey, Server> {
+class ServerStores extends Stores<int, IntKey, Server> {
   static final _instance = ServerStores._internal(_toDatabaseKey);
   ServerStores._internal(super.from);
   factory ServerStores() => _instance;
@@ -154,10 +162,10 @@ class ServerStores extends Stores<IntKey, Server> {
     return IntKey(key as int);
   }
 
-  static final _storeServer = StoreRef<IntKey, Object>('server');
+  static final _storeServer = intMapStoreFactory.store('server');
 
   @override
-  StoreRef<IntKey, Object> storeRef() {
+  StoreRef<int, Object> storeRef() {
     return _storeServer;
   }
 
@@ -167,7 +175,7 @@ class ServerStores extends Stores<IntKey, Server> {
   }
 }
 
-class ServerDataStore extends _Store<StringKey, ServerDataBase, ServerDataStores> {
+class ServerDataStore extends _Store<String, StringKey, ServerDataBase, ServerDataStores> {
   ServerDataStore({required super.database, required super.store});
 
   @override
@@ -179,7 +187,8 @@ class ServerDataStore extends _Store<StringKey, ServerDataBase, ServerDataStores
   @override
   @Deprecated("invalid method")
   Future<StringKey> add(ServerDataBase value) async {
-    throw UnimplementedError("invalid method, cannot insert server data without an associated server");
+    throw UnimplementedError(
+        "invalid method, cannot insert server data without an associated server");
   }
 
   @override
@@ -211,7 +220,7 @@ class ServerDataStore extends _Store<StringKey, ServerDataBase, ServerDataStores
   }
 }
 
-class ServerDataStores extends Stores<StringKey, ServerDataBase> {
+class ServerDataStores extends Stores<String, StringKey, ServerDataBase> {
   static final _instance = ServerDataStores._internal(_toDatabaseKey);
   ServerDataStores._internal(super.from);
   factory ServerDataStores() => _instance;

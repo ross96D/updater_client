@@ -9,11 +9,12 @@ import 'package:updater_client/bdapi.dart';
 import 'package:updater_client/database.dart';
 import 'package:updater_client/pages/add_server.dart';
 import 'package:updater_client/theme.dart';
+import 'package:updater_client/utils/utils.dart';
 import 'package:updater_client/widgets/button.dart';
 import 'package:updater_client/widgets/showfps.dart';
-import 'package:updater_client/widgets/sidebar/sidebar.dart';
-import 'package:updater_client/widgets/sidebar/sidebar_item.dart';
+import 'package:updater_client/widgets/sidebar.dart';
 import 'package:path/path.dart' as path;
+import 'package:updater_client/widgets/toast.dart';
 
 import 'pages/view_application.dart';
 
@@ -113,15 +114,22 @@ class AppLayout extends StatelessWidget {
           final session = manager.sessions[key]!;
           items.add(SidebarItem(
             icon: switch (session.state.value) {
-              NotConnected() => Icons.notifications_off,
-              Connected() => Icons.notifications_on,
-              ConnectionError() => Icons.error,
+              NotConnected() => Icons.cloud,
+              Connected() => Icons.cloud_done,
+              ConnectionError() => Icons.cloud_off,
             },
             text: session.server.name.value,
+            deleteAction: () {
+              manager.serverStore.delete(IntKey(key)).onError((error, stackTrace) {
+                showToast(context, ToastType.error, "error deleting server", "Error: $error\nStacktrace: $stackTrace");
+                return true;
+              });
+            }
           ));
           keys.add(key);
         }
         return AnimatedSidebar(
+          itemIconSize: 25,
           onItemSelected: (index) {
             final k = keys[index];
             GoRouter.of(context).push("/view-server/$k");
@@ -135,7 +143,25 @@ class AppLayout extends StatelessWidget {
           header: (isExpanded) {
             return Button(
               onTap: () {
-                GoRouter.of(context).push("/add-server");
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return const Dialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.elliptical(20, 15)),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: SizedBox(
+                          width: 400,
+                          child: IntrinsicHeight(
+                            child: AddServer(),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
               },
               child: SizedBox(
                 height: 30,
@@ -259,7 +285,6 @@ final canPopTracker = NavigatorChangeTracker();
 
 final RouteObserver routeObserver = RouteObserver(canPopTracker);
 
-
 final navigatorKey = GlobalKey<NavigatorState>();
 
 final routes = GoRouter(
@@ -295,12 +320,6 @@ final routes = GoRouter(
             final manager = sessionaizer.sessions[int.parse(id)]!;
 
             return ServerDataView(manager: manager);
-          },
-        ),
-        GoRoute(
-          path: "/add-server",
-          builder: (context, state) {
-            return const AddServer();
           },
         ),
       ],

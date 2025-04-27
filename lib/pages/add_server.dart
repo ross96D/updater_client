@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:updater_client/database.dart';
 import 'package:updater_client/models/base.dart';
 import 'package:updater_client/models/server.dart';
@@ -122,6 +123,7 @@ class _AddServer extends State<AddServer> {
                     if (_key.currentState!.validate()) {
                       final store = GetIt.instance.get<ServerStore>();
                       store.add(_state);
+                      context.pop();
                     }
                   },
                   child: const Text('Submit'),
