@@ -102,6 +102,113 @@ class AppLayout extends StatelessWidget {
   final Widget child;
   final void Function(Brightness) changeTheme;
 
+  SidebarItem _buildSideBarItem(
+    BuildContext context,
+    int key,
+    SessionManager session,
+    ServerStore store,
+  ) {
+    final state = session.state.value;
+    final servername = session.server.name.value;
+    final serverdata = session.store.givemeSync(session.server)?.toServerData();
+
+    void deleteCallback() {
+      store.delete(IntKey(key)).onError((error, stackTrace) {
+        showToast(
+          context,
+          ToastType.error,
+          "error deleting server",
+          "Error: $error\nStacktrace: $stackTrace",
+        );
+        return true;
+      });
+    }
+
+    void upgradeCallback() {
+      session.upgrade().then(
+        (value) {
+          value.match(
+            onSuccess: (v) {
+              switch (v) {
+                case Upgrade():
+                  showToast(context, ToastType.info, "Upgrading server $servername", "");
+                case UpToDate():
+                  showToast(context, ToastType.info, "Server $servername is uptodate", "");
+              }
+            },
+            onError: (e) {
+              showToast(
+                context,
+                ToastType.error,
+                "Error upgrading server $servername",
+                e.error(),
+              );
+            },
+          );
+        },
+        onError: (e) {
+          showToast(
+            context,
+            ToastType.error,
+            "Error upgrading server ${session.server.name.value}",
+            "$e",
+          );
+        },
+      );
+    }
+
+    return SidebarItem(
+      icon: switch (state) {
+        NotConnected() => Icons.cloud,
+        Connected() => Icons.cloud_done,
+        ConnectionError() => Icons.cloud_off,
+      },
+      text: "${session.server.name.value} ${serverdata?.version.toString() ?? ""}",
+      upgradeAction: upgradeCallback,
+      deleteAction: () {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return Dialog(
+              child: Padding(
+                padding: const EdgeInsets.all(18.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Are you sure you want to delete "
+                      "\"${session.server.name.value}\" server",
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            deleteCallback();
+                            context.pop();
+                          },
+                          child: const Text("Yes"),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            context.pop();
+                          },
+                          child: const Text("No"),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildSideBar(BuildContext context) {
     final theme = Theme.of(context);
     final manager = GetIt.instance.get<Sessionaizer>();
@@ -112,68 +219,7 @@ class AppLayout extends StatelessWidget {
         final keys = <int>[];
         for (final key in manager.sessions.keys) {
           final session = manager.sessions[key]!;
-          final serverdata = session.store.givemeSync(session.server)?.toServerData();
-          items.add(
-            SidebarItem(
-              icon: switch (session.state.value) {
-                NotConnected() => Icons.cloud,
-                Connected() => Icons.cloud_done,
-                ConnectionError() => Icons.cloud_off,
-              },
-              text: "${session.server.name.value} ${serverdata?.version.toString() ?? ""}",
-              deleteAction: () {
-                showDialog(
-                  context: context,
-                  builder: (context) {
-                    return Dialog(
-                      child: Padding(
-                        padding: const EdgeInsets.all(18.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "Are you sure you want to delete "
-                              "\"${session.server.name.value}\" server",
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ElevatedButton(
-                                  onPressed: () {
-                                    manager.serverStore.delete(IntKey(key)).onError(
-                                      (error, stackTrace) {
-                                        showToast(
-                                          context,
-                                          ToastType.error,
-                                          "error deleting server",
-                                          "Error: $error\nStacktrace: $stackTrace",
-                                        );
-                                        return true;
-                                      },
-                                    );
-                                    context.pop();
-                                  },
-                                  child: const Text("Yes"),
-                                ),
-                                const SizedBox(width: 8),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    context.pop();
-                                  },
-                                  child: const Text("No"),
-                                )
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          );
+          items.add(_buildSideBarItem(context, key, session, manager.serverStore));
           keys.add(key);
         }
         return AnimatedSidebar(

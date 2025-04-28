@@ -417,19 +417,37 @@ class _AnimatedSidebarState extends State<AnimatedSidebar> with TickerProviderSt
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: SizedOverflowBox(
-              size: Size(widget.itemIconSize-5, widget.itemIconSize),
+              size: Size(widget.itemIconSize - 5, widget.itemIconSize),
               child: SmallIconButton(
                 splashColor: isSelected ? theme.colorScheme.onPrimary.withOpacity(0.4) : null,
                 hoverColor: isSelected ? theme.colorScheme.onPrimary.withOpacity(0.2) : null,
                 onTap: item.deleteAction,
                 icon: Icon(
                   Icons.delete,
-                  size: widget.itemIconSize-5,
+                  size: widget.itemIconSize - 5,
                   color: widget.itemIconColor ?? _defaultIconColor(theme, isSelected),
                 ),
               ),
             ),
           )
+      ],
+    );
+  }
+
+  void _showContextMenu(BuildContext context, TapDownDetails details, SidebarItem item) {
+    final position = details.globalPosition;
+    showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(position.dx, position.dy, position.dx, position.dy),
+      items: [
+        PopupMenuItem(
+          onTap: item.upgradeAction,
+          child: const Text("upgrade"),
+        ),
+        PopupMenuItem(
+          onTap: item.deleteAction,
+          child: const Text("delete"),
+        ),
       ],
     );
   }
@@ -460,6 +478,7 @@ class _AnimatedSidebarState extends State<AnimatedSidebar> with TickerProviderSt
           _setSelectedIndex(index);
           widget.onItemSelected(index);
         },
+        onSecondaryTapDown: (details) => _showContextMenu(context, details, item),
       ),
     );
   }
@@ -474,6 +493,7 @@ class SidebarItem {
     required this.text,
     required this.icon,
     required this.deleteAction,
+    required this.upgradeAction,
   });
 
   /// The text of the item.
@@ -482,5 +502,6 @@ class SidebarItem {
   /// The icon of the item.
   final IconData icon;
 
-  final void Function() deleteAction; 
+  final void Function() deleteAction;
+  final void Function() upgradeAction;
 }

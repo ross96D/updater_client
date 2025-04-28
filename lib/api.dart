@@ -126,6 +126,20 @@ class InvalidUriError extends ApiError {
   List<Object?> get props => [_error, _source];
 }
 
+class UnexpectedResponseError extends ApiError {
+  final String _error;
+  final int _status;
+  const UnexpectedResponseError(this._status, this._error);
+
+  @override
+  String error() {
+    return "Unexpected response $_status\n$_error";
+  }
+
+  @override
+  List<Object?> get props => [_error, _status];
+}
+
 sealed class SessionConnectionState with EquatableMixin {
   const SessionConnectionState();
 }
@@ -151,6 +165,22 @@ class ConnectionError extends SessionConnectionState {
   @override
   List<Object?> get props => [error];
 }
+
+sealed class UpgradeResponse {
+  const UpgradeResponse();
+}
+
+class Upgrade extends UpgradeResponse {
+  const Upgrade();
+}
+
+class UpToDate extends UpgradeResponse {
+  const UpToDate();
+}
+
+sealed class _MethodHttp {}
+class GET extends _MethodHttp {}
+class POST extends _MethodHttp {}
 
 class Session with EquatableMixin {
   final Server server;
@@ -250,7 +280,7 @@ class Session with EquatableMixin {
     }
   }
 
-  Future<Result<HttpClientResponse, ApiError>> _initRequest(String p) async {
+  Future<Result<HttpClientResponse, ApiError>> _initRequest(String p, _MethodHttp method) async {
     final uri = _join(url, p);
     final client = HttpClient();
 
@@ -260,7 +290,10 @@ class Session with EquatableMixin {
     }
     HttpClientRequest request;
     try {
-      request = await client.getUrl(uri);
+      request = switch(method) {
+        GET() => await client.getUrl(uri),
+        POST() => await client.postUrl(uri),
+      };
     } catch (e) {
       return Result.error(NetworkError("$e"));
     }
@@ -284,11 +317,12 @@ class Session with EquatableMixin {
   }
 
   Future<Result<ServerData, ApiError>> list() async {
+    // TODO change this to a name more accordingly to what really does
     return _call<ServerData, ApiError, Void>(_list, Void());
   }
 
   Future<Result<ServerData, ApiError>> _list(Void _) async {
-    final result = await _initRequest("list");
+    final result = await _initRequest("list", GET());
     if (result.isError()) {
       return Result.error(result.unsafeGetError());
     }
@@ -302,16 +336,28 @@ class Session with EquatableMixin {
     return parseJsonObject(stringBody, ServerData.fromJson);
   }
 
-  Future<Result<Void, ApiError>> upgrade() async {
-    return _call<Void, ApiError, Void>(_upgrade, Void());
+  Future<Result<UpgradeResponse, ApiError>> upgrade() async {
+    return _call<UpgradeResponse, ApiError, Void>(_upgrade, Void());
   }
 
-  Future<Result<Void, ApiError>> _upgrade(Void _) async {
-    final result = await _initRequest("upgrade");
-    if (result.isError()) {
-      return Result.error(result.unsafeGetError());
-    }
-    return Result.success(Void());
+  Future<Result<UpgradeResponse, ApiError>> _upgrade(Void _) async {
+    final result = await _initRequest("upgrade", POST());
+    return result.match<FutureOr<Result<UpgradeResponse, ApiError>>>(
+      onSuccess: (v) async {
+        if (v.statusCode == 200) {
+          return Result.success(const Upgrade());
+        } else if (v.statusCode == 204) {
+          return Result.success(const UpToDate());
+        }
+        try {
+          final resp = await v.transform(utf8.decoder).join("");
+          return Result.error(UnexpectedResponseError(v.statusCode, resp));
+        } catch (e) {
+          return Result.error(UnexpectedResponseError(v.statusCode, "error reading response $e"));
+        }
+      },
+      onError: (e) => Result.error(e),
+    );
   }
 
   Future<Result<String, ApiError>> config() async {
@@ -319,7 +365,7 @@ class Session with EquatableMixin {
   }
 
   Future<Result<String, ApiError>> _config(Void _) async {
-    final result = await _initRequest("config");
+    final result = await _initRequest("config", GET());
     if (result.isError()) {
       return Result.error(result.unsafeGetError());
     }
@@ -338,7 +384,8 @@ class Session with EquatableMixin {
   }
 
   Future<Result<Void, ApiError>> _reload(Void _) async {
-    final result = await _initRequest("reload");
+    // TODO add reload data
+    final result = await _initRequest("reload", POST());
     if (result.isError()) {
       return Result.error(result.unsafeGetError());
     }

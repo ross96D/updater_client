@@ -16,9 +16,11 @@ class SessionManager {
   SessionManager(this.session, this.store);
 
   DateTime? _listCacheStartTime;
-  Stream<Result<ServerData, ApiError>> list() async* {
+  Stream<Result<ServerData, ApiError>> list({bool noCache = false}) async* {
     bool cache = true;
-    if (_listCacheStartTime == null) {
+    if (noCache) {
+      cache = false;
+    } else if (_listCacheStartTime == null) {
       cache = false;
     } else if (DateTime.now().difference(_listCacheStartTime!) > const Duration(minutes: 120)) {
       cache = false;
@@ -44,12 +46,25 @@ class SessionManager {
     }
   }
 
-  Future<Result<Void, ApiError>> upgrade() {
-    return session.upgrade();
+  Future<Result<UpgradeResponse, ApiError>> upgrade() async {
+    final result = await session.upgrade();
+    result.match(
+      onSuccess: (v) {
+        switch (v) {
+          case Upgrade():
+            list(noCache: true);
+          case UpToDate():
+        }
+      },
+      onError: (e) {},
+    );
+    return result;
   }
 
   Future<Result<Void, ApiError>> reload() {
-    return session.reload();
+    final response = session.reload();
+    response.then((value) => null);
+    return response;
   }
 
   Stream<Result<String, ApiError>> config() async* {
