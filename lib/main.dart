@@ -114,19 +114,63 @@ class AppLayout extends StatelessWidget {
           final session = manager.sessions[key]!;
           final serverdata = session.store.givemeSync(session.server)?.toServerData();
           items.add(SidebarItem(
-            icon: switch (session.state.value) {
-              NotConnected() => Icons.cloud,
-              Connected() => Icons.cloud_done,
-              ConnectionError() => Icons.cloud_off,
-            },
-            text: "${session.server.name.value} ${serverdata?.version.toString() ?? ""}",
-            deleteAction: () {
-              manager.serverStore.delete(IntKey(key)).onError((error, stackTrace) {
-                showToast(context, ToastType.error, "error deleting server", "Error: $error\nStacktrace: $stackTrace");
-                return true;
-              });
-            }
-          ));
+              icon: switch (session.state.value) {
+                NotConnected() => Icons.cloud,
+                Connected() => Icons.cloud_done,
+                ConnectionError() => Icons.cloud_off,
+              },
+              text: "${session.server.name.value} ${serverdata?.version.toString() ?? ""}",
+              deleteAction: () {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return Dialog(
+                      child: Padding(
+                        padding: const EdgeInsets.all(18.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "Are you sure you want to delete "
+                              "\"${session.server.name.value}\" server",
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    manager.serverStore.delete(IntKey(key)).onError(
+                                      (error, stackTrace) {
+                                        showToast(
+                                          context,
+                                          ToastType.error,
+                                          "error deleting server",
+                                          "Error: $error\nStacktrace: $stackTrace",
+                                        );
+                                        return true;
+                                      },
+                                    );
+                                    context.pop();
+                                  },
+                                  child: const Text("Yes"),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    context.pop();
+                                  },
+                                  child: const Text("No"),
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }));
           keys.add(key);
         }
         return AnimatedSidebar(
