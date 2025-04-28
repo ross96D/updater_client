@@ -113,7 +113,8 @@ class AppLayout extends StatelessWidget {
         for (final key in manager.sessions.keys) {
           final session = manager.sessions[key]!;
           final serverdata = session.store.givemeSync(session.server)?.toServerData();
-          items.add(SidebarItem(
+          items.add(
+            SidebarItem(
               icon: switch (session.state.value) {
                 NotConnected() => Icons.cloud,
                 Connected() => Icons.cloud_done,
@@ -170,7 +171,9 @@ class AppLayout extends StatelessWidget {
                     );
                   },
                 );
-              }));
+              },
+            ),
+          );
           keys.add(key);
         }
         return AnimatedSidebar(
