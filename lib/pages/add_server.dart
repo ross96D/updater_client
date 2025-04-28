@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:updater_client/database.dart';
 import 'package:updater_client/models/base.dart';
 import 'package:updater_client/models/server.dart';
+import 'package:updater_client/widgets/button.dart';
 
 class AddServer extends StatefulWidget {
-  const AddServer({super.key});
+  const AddServer({super.key, this.server});
+  final Server? server;
 
   @override
   State<StatefulWidget> createState() => _AddServer();
@@ -19,11 +21,12 @@ class _AddServer extends State<AddServer> {
   late final TextEditingController addressCtrl;
   late final TextEditingController usernameCtrl;
   late final TextEditingController passwordCtrl;
+  bool showPassword = false;
 
   @override
   void initState() {
     super.initState();
-    _state = Server.emtpy();
+    _state = widget.server ?? Server.emtpy();
     nameCtrl = TextEditingController(text: _state.name.value);
     nameCtrl.addListener(() {
       setState(() {
@@ -103,17 +106,35 @@ class _AddServer extends State<AddServer> {
               keyboardType: TextInputType.text,
               textInputAction: TextInputAction.next,
             ),
-            TextFormField(
-              key: const Key('AddServer_Password'),
-              controller: passwordCtrl,
-              obscureText: true,
-              decoration: const InputDecoration(
-                icon: Icon(Icons.lock),
-                labelText: "password",
-              ),
-              validator: (value) => _state.password.validator(value ?? "")?.text(),
-              keyboardType: TextInputType.visiblePassword,
-              textInputAction: TextInputAction.next,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    key: const Key('AddServer_Password'),
+                    controller: passwordCtrl,
+                    obscureText: !showPassword,
+                    decoration: const InputDecoration(
+                      icon: Icon(Icons.lock),
+                      labelText: "password",
+                    ),
+                    validator: (value) => _state.password.validator(value ?? "")?.text(),
+                    keyboardType: TextInputType.visiblePassword,
+                    textInputAction: TextInputAction.next,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                SizedOverflowBox(
+                  size: const Size(35, 50),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 15.0),
+                    child: SmallIconButton(
+                      icon: const Icon(Icons.remove_red_eye, size: 25),
+                      onTap: () => setState(() => showPassword = !showPassword),
+                    ),
+                  ),
+                ),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.only(top: 10),
@@ -131,7 +152,7 @@ class _AddServer extends State<AddServer> {
               ]),
             )
           ],
-        )
+        ),
       ),
     );
   }

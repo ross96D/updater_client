@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:updater_client/models/server.dart';
 import 'package:updater_client/widgets/button.dart';
 
 /// AnimatedSidebar is a stateful widget that displays a sidebar that can
@@ -278,16 +279,6 @@ class _AnimatedSidebarState extends State<AnimatedSidebar> with TickerProviderSt
               ),
             ),
           ),
-          // child: LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) {
-          //   return ConstrainedBox(
-          //     constraints: constraints,
-          //     child: SingleChildScrollView(
-          //       child: Column(
-          //         children: _buildMenuItems(context),
-          //       ),
-          //     ),
-          //   );
-          // }),
           _buildSwitchButton(),
         ],
       ),
@@ -448,6 +439,10 @@ class _AnimatedSidebarState extends State<AnimatedSidebar> with TickerProviderSt
           onTap: item.deleteAction,
           child: const Text("delete"),
         ),
+        PopupMenuItem(
+          onTap: () => item.editAction(item.server),
+          child: const Text("edit"),
+        ),
       ],
     );
   }
@@ -494,6 +489,8 @@ class SidebarItem {
     required this.icon,
     required this.deleteAction,
     required this.upgradeAction,
+    required this.editAction,
+    required this.server,
   });
 
   /// The text of the item.
@@ -502,6 +499,9 @@ class SidebarItem {
   /// The icon of the item.
   final IconData icon;
 
+  final Server server;
+
   final void Function() deleteAction;
   final void Function() upgradeAction;
+  final void Function(Server server) editAction;
 }

@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:updater_client/api.dart';
 import 'package:updater_client/bdapi.dart';
 import 'package:updater_client/database.dart';
+import 'package:updater_client/models/server.dart';
 import 'package:updater_client/pages/add_server.dart';
 import 'package:updater_client/theme.dart';
 import 'package:updater_client/utils/utils.dart';
@@ -102,6 +103,28 @@ class AppLayout extends StatelessWidget {
   final Widget child;
   final void Function(Brightness) changeTheme;
 
+  void _showServerDialog(BuildContext context, [Server? server]) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.elliptical(20, 15)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SizedBox(
+              width: 400,
+              child: IntrinsicHeight(
+                child: AddServer(server: server),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   SidebarItem _buildSideBarItem(
     BuildContext context,
     int key,
@@ -158,12 +181,14 @@ class AppLayout extends StatelessWidget {
     }
 
     return SidebarItem(
+      server: session.server,
       icon: switch (state) {
         NotConnected() => Icons.cloud,
         Connected() => Icons.cloud_done,
         ConnectionError() => Icons.cloud_off,
       },
       text: "${session.server.name.value} ${serverdata?.version.toString() ?? ""}",
+      editAction: (Server server) =>_showServerDialog(context, server),
       upgradeAction: upgradeCallback,
       deleteAction: () {
         showDialog(
@@ -236,27 +261,7 @@ class AppLayout extends StatelessWidget {
               : theme.primaryColorLight,
           header: (isExpanded) {
             return Button(
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (context) {
-                    return const Dialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.elliptical(20, 15)),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: SizedBox(
-                          width: 400,
-                          child: IntrinsicHeight(
-                            child: AddServer(),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
+              onTap: () => _showServerDialog(context),
               child: SizedBox(
                 height: 30,
                 child: Padding(
