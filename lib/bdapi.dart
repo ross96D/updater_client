@@ -95,7 +95,11 @@ class Sessionaizer extends ChangeNotifier {
   }
 
   void _openSession(Session session) {
-    session.open().then((_) => notifyListeners());
+    session.open().then(
+      (_) => notifyListeners(),
+      // TODO improve error handling
+      onError: (error) => print("Server ${session.server.name.value} failed to login with $error"),
+    );
   }
 
   void _updateSessions() {
