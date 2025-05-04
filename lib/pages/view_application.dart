@@ -138,7 +138,7 @@ class _ServerDataViewState extends State<_ServerDataView> {
               itemCount: applications.length,
               itemBuilder: (context, index) => ListTile(
                 title: Text(applications[index].name),
-                subtitle: Text(applications[index].serviceType),
+                subtitle: Text(applications[index].service),
                 selected: index == _selectedIndex,
                 onTap: () => setState(() => _selectedIndex = index),
               ),
@@ -187,16 +187,20 @@ class _OverviewTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 16),
       children: [
-        // _buildInfoRow('Index', application.index.toString()),
+        //
         _buildInfoRow('Name', application.name),
         _buildSecureRow('token', application.authToken),
-        _buildInfoRow('Service', application.service),
-        _buildInfoRow('Service Type', application.serviceType),
+
+        if (application.service != "") _buildInfoRow('Service', application.service),
+
+        if (application.serviceType != "") _buildInfoRow('Service Type', application.serviceType),
+
         if (application.commandPre != null)
           _CommandWidget(
             command: application.commandPre!,
             title: 'Pre Command',
           ),
+
         if (application.command != null)
           _CommandWidget(command: application.command!, title: 'Post Command'),
       ],
@@ -217,7 +221,7 @@ class _AssetsTab extends StatelessWidget {
       separatorBuilder: (_, __) => const Divider(),
       itemBuilder: (context, index) => ExpansionTile(
         title: Text(assets[index].name, style: const TextStyle(fontSize: 16)),
-        subtitle: Text(assets[index].serviceType),
+        subtitle: Text(assets[index].service),
         childrenPadding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           _buildInfoRow('System Path', assets[index].systemPath),
