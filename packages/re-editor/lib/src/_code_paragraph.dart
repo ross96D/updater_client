@@ -226,7 +226,7 @@ class _CodeParagraphProvider {
     );
     painter.text = TextSpan(
       text: '0',
-      style: style
+      style: style,
     );
     _preferredLineHeight = painter.preferredLineHeight;
     _cachedParagraphs.clear();
@@ -252,11 +252,11 @@ class _CodeParagraphProvider {
       return cache;
     }
     final _ParagraphImpl impl;
-    // Trucate the span if it's too long.
+    // Truncate the span if it's too long.
     final String plainText = span.toPlainText();
     final int? renderingLength = _maxLengthSingleLineRendering;
     if (renderingLength != null && plainText.length > renderingLength) {
-      impl = _build(trucate(span, renderingLength), plainText.substring(0, renderingLength), true);
+      impl = _build(truncate(span, renderingLength), plainText.substring(0, renderingLength), true);
     } else {
       impl = _build(span, plainText, false);
     }
@@ -264,7 +264,7 @@ class _CodeParagraphProvider {
     return impl;
   }
 
-  TextSpan trucate(TextSpan span, int maxLength) {
+  TextSpan truncate(TextSpan span, int maxLength) {
     int currentLength = 0;
     TextSpan truncateSpan(TextSpan span) {
       if (currentLength >= maxLength) {

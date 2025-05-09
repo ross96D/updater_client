@@ -40,7 +40,13 @@ class _ConfigurationEditorState extends State<ConfigurationEditor> {
       future: state,
       builder: (context, state) {
         return switch (state.connectionState) {
-          ConnectionState.none || ConnectionState.waiting => const CircularProgressIndicator(),
+          ConnectionState.none || ConnectionState.waiting => const Center(
+              child: SizedBox(
+                width: 50,
+                height: 50,
+                child: CircularProgressIndicator(),
+              ),
+            ),
           ConnectionState.active ||
           ConnectionState.done =>
             state.data != null ? onActive(state.data!) : SelectableText("${state.error}"),
@@ -64,7 +70,8 @@ class _EditorState extends State<_Editor> {
   @override
   void initState() {
     controller = CodeLineEditingController(
-      codeLines: CodeLines.fromText(widget.initial.toString()),
+      // replace tab characters with 4 spaces because flutter does not handle tab characters
+      codeLines: CodeLines.fromText(widget.initial.toString().replaceAll("\t", " " * 4)),
       options: const CodeLineOptions(indentSize: 4),
     );
     super.initState();

@@ -471,6 +471,10 @@ class _CodeEditorState extends State<CodeEditor> {
       fontSize: widget.style?.fontSize ?? _kDefaultTextSize,
       fontFamily: widget.style?.fontFamily,
       height: widget.style?.fontHeight ?? _kDefaultFontHeight,
+      fontFeatures: const [
+        ui.FontFeature.liningFigures(),
+        ui.FontFeature.slashedZero(),
+      ]
     );
     final bool readOnly = widget.readOnly ?? false;
     final bool autofocus = widget.autofocus ?? true;
