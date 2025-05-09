@@ -9,6 +9,7 @@ import 'package:updater_client/bdapi.dart';
 import 'package:updater_client/database.dart';
 import 'package:updater_client/models/server.dart';
 import 'package:updater_client/pages/add_server.dart';
+import 'package:updater_client/pages/config_editor.dart';
 import 'package:updater_client/theme.dart';
 import 'package:updater_client/utils/utils.dart';
 import 'package:updater_client/widgets/button.dart';
@@ -402,7 +403,7 @@ final routes = GoRouter(
         GoRoute(
           path: "/",
           builder: (context, state) {
-            return Container();
+            return const ConfigurationEditor();
           },
         ),
         GoRoute(
