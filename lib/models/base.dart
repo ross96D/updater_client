@@ -47,3 +47,40 @@ class NonEmptyString extends FormzInput<String, Emtpy> with EquatableMixin {
   }
 
 }
+
+class ServerConfiguration extends Base implements Comparable<String>, Pattern {
+  final String _internal;
+
+  ServerConfiguration(this._internal);
+  factory ServerConfiguration.fromJson(String object) {
+    return ServerConfiguration(object);
+  }
+  
+  @override
+  String toString() {
+    return _internal;
+  }
+
+  @override
+  List<Object?> get props => [_internal];
+  
+  @override
+  Object toJson() {
+    return _internal;
+  }
+  
+  @override
+  Iterable<Match> allMatches(String string, [int start = 0]) {
+    return _internal.allMatches(string, start);
+  }
+  
+  @override
+  int compareTo(String other) {
+    return _internal.compareTo(other);
+  }
+  
+  @override
+  Match? matchAsPrefix(String string, [int start = 0]) {
+    return _internal.matchAsPrefix(string, start);
+  }
+}

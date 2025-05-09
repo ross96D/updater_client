@@ -26,15 +26,19 @@ void main() {
     await dir.create();
     final dbPath = path.join(dir.path, "database");
     GetIt.instance.registerSingleton(DataBase(dbPath));
-    GetIt.instance.registerSingleton<ServerStore>(
-      ServerStore(
+    GetIt.instance.registerSingleton<ServerRepository>(
+      ServerRepository(
         database: GetIt.instance.get<DataBase>(),
         store: ServerStores(),
       ),
     );
-    GetIt.instance.registerSingleton(ServerDataStore(
-      store: ServerDataStores(),
+    GetIt.instance.registerSingleton(ServerDataRepository(
       database: GetIt.instance.get<DataBase>(),
+      store: ServerDataStores(),
+    ));
+    GetIt.instance.registerSingleton(ServerConfigurationRepository(
+      database: GetIt.instance.get<DataBase>(),
+      store: ServerConfigurationStores(),
     ));
     GetIt.instance.registerSingleton(Sessionaizer());
     runApp(const App());
@@ -130,11 +134,11 @@ class AppLayout extends StatelessWidget {
     BuildContext context,
     int key,
     SessionManager session,
-    ServerStore store,
+    ServerRepository store,
   ) {
     final state = session.state.value;
     final servername = session.server.name.value;
-    final serverdata = session.store.givemeSync(session.server)?.toServerData();
+    final serverdata = session.serverDataRepo.givemeSync(session.server)?.toServerData();
 
     void deleteCallback() {
       store.delete(IntKey(key)).onError((error, stackTrace) {
@@ -189,8 +193,9 @@ class AppLayout extends StatelessWidget {
         ConnectionError() => Icons.cloud_off,
       },
       text: "${session.server.name.value} ${serverdata?.version.toString() ?? ""}",
-      editAction: (Server server) =>_showServerDialog(context, server),
+      editAction: (Server server) => _showServerDialog(context, server),
       upgradeAction: upgradeCallback,
+      editConfigurationAction: () => context.push("/edit-configuration/$key"),
       deleteAction: () {
         showDialog(
           context: context,
@@ -245,7 +250,7 @@ class AppLayout extends StatelessWidget {
         final keys = <int>[];
         for (final key in manager.sessions.keys) {
           final session = manager.sessions[key]!;
-          items.add(_buildSideBarItem(context, key, session, manager.serverStore));
+          items.add(_buildSideBarItem(context, key, session, manager.serverRepo));
           keys.add(key);
         }
         return AnimatedSidebar(
@@ -403,14 +408,29 @@ final routes = GoRouter(
         GoRoute(
           path: "/",
           builder: (context, state) {
-            return const ConfigurationEditor();
+            return const Center();
+          },
+        ),
+        GoRoute(
+          path: "/edit-configuration/:id",
+          builder: (context, state) {
+            final store = GetIt.instance.get<ServerRepository>();
+            final id = state.pathParameters["id"];
+            final server = store.getSync(IntKey(int.tryParse(id!)!));
+            if (server == null) {
+              return Text("SERVER with id $id does not exist");
+            }
+            final sessionaizer = GetIt.instance.get<Sessionaizer>();
+            final manager = sessionaizer.sessions[int.parse(id)]!;
+
+            return ConfigurationEditor(manager: manager);
           },
         ),
         GoRoute(
           parentNavigatorKey: navigatorKey,
           path: "/view-server/:id",
           builder: (context, state) {
-            final store = GetIt.instance.get<ServerStore>();
+            final store = GetIt.instance.get<ServerRepository>();
             final id = state.pathParameters["id"];
             final server = store.getSync(IntKey(int.tryParse(id!)!));
             if (server == null) {

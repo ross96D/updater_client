@@ -2,18 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:updater_client/api.dart';
 import 'package:updater_client/database.dart';
+import 'package:updater_client/models/base.dart';
 import 'package:updater_client/models/server.dart';
 import 'package:updater_client/models/updater_models.dart';
 import 'package:updater_client/utils/utils.dart';
 
 class SessionManager {
-  final Session session;
-  final ServerDataStore store;
+  final Session _session;
+  final ServerDataRepository serverDataRepo;
+  final ServerConfigurationRepository serverConfigRepo;
 
-  Server get server => session.server;
-  ValueNotifier<SessionConnectionState> get state => session.state;
+  Server get server => _session.server;
+  ValueNotifier<SessionConnectionState> get state => _session.state;
 
-  SessionManager(this.session, this.store);
+  SessionManager(this._session, this.serverDataRepo, this.serverConfigRepo);
 
   DateTime? _listCacheStartTime;
   Stream<Result<ServerData, ApiError>> list({bool noCache = false}) async* {
@@ -26,7 +28,7 @@ class SessionManager {
       cache = false;
     }
 
-    var data = await store.giveme(session.server);
+    var data = await serverDataRepo.giveme(_session.server);
     if (data != null) {
       yield Result.success(data.toServerData());
       if (cache) {
@@ -34,20 +36,20 @@ class SessionManager {
       }
     }
 
-    final resultFuture = session.list();
+    final resultFuture = _session.list();
     final result = await resultFuture;
 
     if (result.isSuccess()) {
       _listCacheStartTime = DateTime.now();
       yield result;
-      await store.insert(session.server, ServerDataBase(result.unsafeGetSuccess()));
+      await serverDataRepo.insert(_session.server, ServerDataBase(result.unsafeGetSuccess()));
     } else {
       yield result;
     }
   }
 
   Future<Result<UpgradeResponse, ApiError>> upgrade() async {
-    final result = await session.upgrade();
+    final result = await _session.upgrade();
     result.match(
       onSuccess: (v) {
         switch (v) {
@@ -62,61 +64,65 @@ class SessionManager {
   }
 
   Future<Result<Void, ApiError>> reload() {
-    final response = session.reload();
+    final response = _session.reload();
     response.then((value) => null);
     return response;
   }
 
-  Stream<Result<String, ApiError>> config() async* {
-    throw UnimplementedError("i need a config store first");
+  Future<Result<ServerConfiguration, ApiError>> config() async {
+    return await _session.config();
   }
 }
 
 class Sessionaizer extends ChangeNotifier {
   late final Map<int, SessionManager> sessions;
-  late final ServerStore serverStore;
-  late final ServerDataStore serverDataStore;
+  late final ServerRepository serverRepo;
+  late final ServerDataRepository serverDataRepo;
+  late final ServerConfigurationRepository serverConfigRepo;
 
   Sessionaizer() {
-    serverStore = GetIt.instance.get<ServerStore>();
-    serverDataStore = GetIt.instance.get<ServerDataStore>();
+    serverRepo = GetIt.instance.get<ServerRepository>();
+    serverDataRepo = GetIt.instance.get<ServerDataRepository>();
+    serverConfigRepo = GetIt.instance.get<ServerConfigurationRepository>();
 
     sessions = {};
-    serverStore.addListener(_updateSessions);
+    serverRepo.addListener(_updateSessions);
 
-    for (final dbKey in serverStore.items.keys) {
+    for (final dbKey in serverRepo.items.keys) {
       final key = dbKey.toKey();
-      final server = serverStore.items[dbKey]!;
+      final server = serverRepo.items[dbKey]!;
       final session = Session(server);
       _openSession(session);
       session.state.addListener(() => notifyListeners());
-      sessions[key] = SessionManager(session, serverDataStore);
+      sessions[key] = SessionManager(session, serverDataRepo, serverConfigRepo);
     }
   }
 
   void _openSession(Session session) {
     session.open().then(
       (_) => notifyListeners(),
-      // TODO improve error handling
-      onError: (error) => print("Server ${session.server.name.value} failed to login with $error"),
+      onError: (error) {
+        // TODO improve error handling
+        print("Server ${session.server.name.value} failed to login with $error");
+      },
     );
   }
 
   void _updateSessions() {
-    for (final dbKey in serverStore.items.keys) {
+    for (final dbKey in serverRepo.items.keys) {
       final key = dbKey.toKey();
-      final item = serverStore.items[dbKey]!;
+      final item = serverRepo.items[dbKey]!;
       final sessionServer = sessions[key]?.server;
 
       if (sessionServer == null || sessions[key]!.server != item) {
-        sessions[key] = SessionManager(Session(item), serverDataStore);
-        _openSession(sessions[key]!.session);
+        sessions[key] = SessionManager(Session(item), serverDataRepo, serverConfigRepo);
+        _openSession(sessions[key]!._session);
       }
     }
 
     final toRemove = <int>[];
     for (final key in sessions.keys) {
-      if (serverStore.items[IntKey(key)] == null) {
+      if (serverRepo.items[IntKey(key)] == null) {
         toRemove.add(key);
       }
     }

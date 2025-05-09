@@ -142,7 +142,7 @@ class _AddServer extends State<AddServer> {
                 ElevatedButton(
                   onPressed: () {
                     if (_key.currentState!.validate()) {
-                      final store = GetIt.instance.get<ServerStore>();
+                      final store = GetIt.instance.get<ServerRepository>();
                       store.add(_state);
                       context.pop();
                     }

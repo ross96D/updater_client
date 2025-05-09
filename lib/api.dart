@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
+import 'package:updater_client/models/base.dart';
 
 import 'package:updater_client/models/server.dart';
 import 'package:updater_client/models/updater_models.dart';
@@ -360,11 +361,11 @@ class Session with EquatableMixin {
     );
   }
 
-  Future<Result<String, ApiError>> config() async {
-    return _call<String, ApiError, Void>(_config, Void());
+  Future<Result<ServerConfiguration, ApiError>> config() async {
+    return _call<ServerConfiguration, ApiError, Void>(_config, Void());
   }
 
-  Future<Result<String, ApiError>> _config(Void _) async {
+  Future<Result<ServerConfiguration, ApiError>> _config(Void _) async {
     final result = await _initRequest("config", GET());
     if (result.isError()) {
       return Result.error(result.unsafeGetError());
@@ -376,7 +377,7 @@ class Session with EquatableMixin {
     } catch (e) {
       return Result.error(NetworkError(e.toString()));
     }
-    return Result.success(stringBody);
+    return Result.success(ServerConfiguration(stringBody));
   }
 
   Future<Result<Void, ApiError>> reload() async {

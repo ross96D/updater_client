@@ -443,6 +443,10 @@ class _AnimatedSidebarState extends State<AnimatedSidebar> with TickerProviderSt
           onTap: () => item.editAction(item.server),
           child: const Text("edit"),
         ),
+        PopupMenuItem(
+          onTap: item.editConfigurationAction,
+          child: const Text("configuration"),
+        ),
       ],
     );
   }
@@ -490,6 +494,7 @@ class SidebarItem {
     required this.deleteAction,
     required this.upgradeAction,
     required this.editAction,
+    required this.editConfigurationAction,
     required this.server,
   });
 
@@ -504,4 +509,5 @@ class SidebarItem {
   final void Function() deleteAction;
   final void Function() upgradeAction;
   final void Function(Server server) editAction;
+  final void Function() editConfigurationAction;
 }
