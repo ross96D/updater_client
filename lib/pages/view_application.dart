@@ -26,6 +26,19 @@ class ServerDataViewState extends State<ServerDataView> {
   void initState() {
     super.initState();
     stream = widget.manager.list();
+    widget.manager.serverDataRepo.addListener(_listenToChanges);
+  }
+
+  void _listenToChanges() {
+    setState(() {
+      stream = widget.manager.list();
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.manager.serverDataRepo.removeListener(_listenToChanges);
+    super.dispose();
   }
 
   Widget _onActive(
@@ -91,7 +104,7 @@ class Errors extends Err with EquatableMixin {
 class _ServerDataView extends StatefulWidget {
   final Result<ServerData, Errors> serverResult;
 
-  const _ServerDataView({super.key, required this.serverResult});
+  const _ServerDataView({required this.serverResult});
 
   @override
   State<_ServerDataView> createState() => _ServerDataViewState();

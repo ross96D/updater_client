@@ -63,9 +63,14 @@ class SessionManager {
     return result;
   }
 
-  Future<Result<Void, ApiError>> reload() {
-    final response = _session.reload();
-    response.then((value) => null);
+  Future<Result<ServerData, ApiError>> reload(String configuration) {
+    final response = _session.reload(configuration);
+    response.then((value) async {
+      if (value.isSuccess()) {
+        _listCacheStartTime = DateTime.now();
+        await serverDataRepo.insert(_session.server, ServerDataBase(value.unsafeGetSuccess()));
+      }
+    });
     return response;
   }
 

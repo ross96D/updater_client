@@ -281,7 +281,7 @@ class Session with EquatableMixin {
     }
   }
 
-  Future<Result<HttpClientResponse, ApiError>> _initRequest(String p, _MethodHttp method) async {
+  Future<Result<HttpClientResponse, ApiError>> _initRequest(String p, _MethodHttp method, [Stream<List<int>>? data]) async {
     final uri = _join(url, p);
     final client = HttpClient();
 
@@ -299,6 +299,13 @@ class Session with EquatableMixin {
       return Result.error(NetworkError("$e"));
     }
     request.headers.add(HttpHeaders.authorizationHeader, "Bearer $token_");
+    if (method is POST && data != null) {
+      try {
+        await request.addStream(data);
+      } catch (e) {
+        return Result.error(NetworkError("$e"));
+      }
+    }
 
     return await _doRequest(request);
   }
@@ -380,17 +387,24 @@ class Session with EquatableMixin {
     return Result.success(ServerConfiguration(stringBody));
   }
 
-  Future<Result<Void, ApiError>> reload() async {
-    return _call<Void, ApiError, Void>(_reload, Void());
+  Future<Result<ServerData, ApiError>> reload(String configuration) async {
+    return _call<ServerData, ApiError, String>(_reload, configuration);
   }
 
-  Future<Result<Void, ApiError>> _reload(Void _) async {
-    // TODO add reload data
-    final result = await _initRequest("reload", POST());
+  Future<Result<ServerData, ApiError>> _reload(String configuration) async {
+    final data = Stream.fromIterable([configuration.codeUnits]);
+    final result = await _initRequest("reload", POST(), data);
     if (result.isError()) {
       return Result.error(result.unsafeGetError());
     }
-    return Result.success(Void());
+    final response = result.unsafeGetSuccess();
+    String stringBody;
+    try {
+      stringBody = await response.transform(utf8.decoder).join("");
+    } catch (e) {
+      return Result.error(NetworkError(e.toString()));
+    }
+    return parseJsonObject(stringBody, ServerData.fromJson);
   }
 }
 
