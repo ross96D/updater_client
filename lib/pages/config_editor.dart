@@ -160,7 +160,7 @@ class _EditorState extends State<_Editor> {
 }
 
 
-/// AI generated and may contain several bugs. This needs review but is just code review so i dont
+/// AI generated and may contain several bugs. This needs review but is just code highlighting so i dont
 /// really care
 final langCue = Mode(
     refs: {
